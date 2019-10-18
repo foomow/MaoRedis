@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.108
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaoRedisLib", "MaoRedisLib\MaoRedisLib.csproj", "{21FA4487-E791-4F60-B9BB-3F12E7CB963B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{4C33E63E-9590-49A4-B75A-C0E98475735A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{21FA4487-E791-4F60-B9BB-3F12E7CB963B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21FA4487-E791-4F60-B9BB-3F12E7CB963B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21FA4487-E791-4F60-B9BB-3F12E7CB963B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21FA4487-E791-4F60-B9BB-3F12E7CB963B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C33E63E-9590-49A4-B75A-C0E98475735A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C33E63E-9590-49A4-B75A-C0E98475735A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C33E63E-9590-49A4-B75A-C0E98475735A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C33E63E-9590-49A4-B75A-C0E98475735A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7BD13089-7B9B-42E1-8050-99631128BA9E}
+	EndGlobalSection
+EndGlobal
