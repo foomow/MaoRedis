@@ -6,7 +6,39 @@
         xmlns:local="clr-namespace:MaoRedisMianBan"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
 
-    </Grid>
+    <DockPanel>
+        <DockPanel.Resources>
+            <local:MainWindow x:Key="MyList"/>
+
+            <HierarchicalDataTemplate DataType="{x:Type local:League}" ItemsSource = "{Binding Path=Divisions}">
+                <TextBlock Text="{Binding Path=Name}"/>
+            </HierarchicalDataTemplate>
+
+            <HierarchicalDataTemplate DataType="{x:Type local:Division}" ItemsSource = "{Binding Path=Teams}">
+                <TextBlock Text="{Binding Path=Name}"/>
+            </HierarchicalDataTemplate>
+
+            <DataTemplate DataType="{x:Type local:Team}">
+                <TextBlock Text="{Binding Path=Name}"/>
+            </DataTemplate>
+        </DockPanel.Resources>
+        <StackPanel Orientation="Vertical" DockPanel.Dock="Left" MinWidth="200">
+            <Menu Name="menu1" Margin="10,10,10,10">
+                <MenuItem Header="My Soccer Leagues"
+                  ItemsSource="{Binding Source={StaticResource MyList}}" />
+            </Menu>
+
+            <TreeView>
+                <TreeViewItem ItemsSource="{Binding Source={StaticResource MyList}}" Header="My Soccer Leagues" />
+            </TreeView>
+        </StackPanel>
+
+        <ToolBar DockPanel.Dock="Top">
+            <Label Content="Key:"/>
+            <TextBox BorderBrush="Black" BorderThickness="1" />
+        </ToolBar>
+        <TextBox DockPanel.Dock="Bottom"/>
+    </DockPanel>
+
 </Window>

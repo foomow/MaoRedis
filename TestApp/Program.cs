@@ -10,7 +10,7 @@ namespace TestApp
         static void Main(string[] args)
         {
             Console.WriteLine("************** Hello Chengdu! **************");
-            RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90:6379");
+            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183:6379", "MukAzxGMOL2");
             adaptor.Connect();
             int db_count=adaptor.GetDBCount();
             Logger.Info($"Database count:{db_count}");

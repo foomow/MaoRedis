@@ -30,6 +30,7 @@ namespace MaoRedisLib
                 options.Password = _password;
             options.AllowAdmin = true;
             options.ConnectTimeout = 30000;
+            options.SyncTimeout = 30000;
             options.ResponseTimeout = 30000;
             options.ClientName = "MaoRedis Client";
             try
@@ -37,6 +38,7 @@ namespace MaoRedisLib
                 Redis = ConnectionMultiplexer.Connect(options);
                 _server = Redis.GetServer(_connectionString);
                 Logger.Info("Redis connected");
+                Logger.Info("Server:"+Redis.GetStatus());
             }
             catch (Exception e)
             {
