@@ -9,27 +9,25 @@
 
     <DockPanel>
         <DockPanel.Resources>
-
-            <HierarchicalDataTemplate DataType="{x:Type local:League}" ItemsSource = "{Binding Path=Divisions}">
+            <HierarchicalDataTemplate DataType="{x:Type local:Server}" ItemsSource = "{Binding Path=Databases}">
                 <TextBlock Text="{Binding Path=Name}"/>
             </HierarchicalDataTemplate>
 
-            <HierarchicalDataTemplate DataType="{x:Type local:Division}" ItemsSource = "{Binding Path=Teams}">
+            <HierarchicalDataTemplate DataType="{x:Type local:Database}" ItemsSource = "{Binding Path=Keys}">
                 <TextBlock Text="{Binding Path=Name}"/>
             </HierarchicalDataTemplate>
 
-            <DataTemplate DataType="{x:Type local:Team}">
+            <DataTemplate DataType="{x:Type local:Key}">
                 <TextBlock Text="{Binding Path=Name}"/>
             </DataTemplate>
         </DockPanel.Resources>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Left" MinWidth="200">
-            <Menu Name="menu1" DockPanel.Dock="Top" Margin="10,10,10,10">
-                <MenuItem Name="MyMenuItems" Header="My Soccer Leagues"
-                   />
+            <Menu Name="menu1" Margin="10,10,10,10">
+                <MenuItem Name="MyMenuItems" Header="Servers" />
             </Menu>
 
-            <TreeView>
-                <TreeViewItem Name="MyTreeViewItems"  Header="My Soccer Leagues" />
+            <TreeView Margin="10,10,10,10" BorderThickness="0">
+                <TreeViewItem Name="MyTreeViewItems" />
             </TreeView>
         </StackPanel>
 

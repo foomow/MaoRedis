@@ -4,41 +4,55 @@ using System.Text;
 
 namespace MaoRedisMianBan
 {
-    public class ListLeagueList : List<League>
-    {
-    }
-
-    public class League
+    public class Server
     {
         public string Name { get; set; }
-        public List<Division> Divisions { get; set; }
+        public List<Database> Databases { get; set; }
 
-    public League(string name, List<Division> divisions)
+        public Server(string name, List<Database> databases)
         {
             Name = name;
-            Divisions = divisions;
+            Databases = databases;
         }
     }
 
-    public class Division
+    public class Database
     {
         public string Name { get; set; }
-    public List<Team> Teams { get; set; }
+        public List<Key> Keys { get; set; }
+        public List<SubKey> SubKeys { get; set; }
 
-    public Division(string name, List<Team> teams)
+        public Database(string name, List<Key> keys,List<SubKey> subKeys)
         {
             Name = name;
-            Teams = teams;
+            Keys = keys;
+            SubKeys = subKeys;
         }
     }
 
-    public class Team
+    public class Key
     {
         public string Name { get; set; }
+        public string Value { get; set; }
 
-        public Team(string name)
+        public Key(string name,string value)
         {
             Name = name;
+            Value = value;
+        }
+    }
+
+    public class SubKey
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public List<SubKey> SubKeys { get; set; }
+
+        public SubKey(string name, string value, List<SubKey> subKeys)
+        {
+            Name = name;
+            Value = value;
+            SubKeys = subKeys;
         }
     }
 }
