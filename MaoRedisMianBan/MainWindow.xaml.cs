@@ -22,10 +22,8 @@ namespace MaoRedisMianBan
     /// </summary>
     public partial class MainWindow : Window
     {
-        public List<League> ListLeagueList { get; set; }
-
         public MainWindow()
-        {            
+        {
             Team teamA1 = new Team("Team A1");
             Team teamB1 = new Team("Team B1");
             Team teamC1 = new Team("Team C1");
@@ -50,22 +48,29 @@ namespace MaoRedisMianBan
 
             League leagueB = new League("League B", new List<Division>() { divisionC, divisionD });
 
-            ListLeagueList = new List<League>() { leagueA,leagueB};
-            InitializeComponent();
+            ListLeagueList LeagueList = new ListLeagueList();
+            
+            LeagueList.Add(leagueA);
+            LeagueList.Add(leagueB);
 
-            Console.WriteLine("************** Hello Chengdu! **************");
-            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183:6379", "MukAzxGMOL2");
-            adaptor.Connect();
-            int db_count = adaptor.GetDBCount();
-            Logger.Info($"Database count:{db_count}");
-            int current_db = adaptor.UseDB(0);
-            Logger.Info($"Current Database:{current_db}");
-            RedisKey[] keys = adaptor.GetKeys().ToArray();
-            foreach (RedisKey key in keys)
-            {
-                Logger.Info(adaptor.KeyType(key) + " " + key.ToString() + ":[" + adaptor.Get(key) + "]");
-            }
-            Console.WriteLine("************** Bye! **************");
+            
+            InitializeComponent();
+            MyTreeViewItems.ItemsSource = LeagueList;
+            MyMenuItems.ItemsSource = LeagueList;
+
+            //Console.WriteLine("************** Hello Chengdu! **************");
+            //RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183:6379", "MukAzxGMOL2");
+            //adaptor.Connect();
+            //int db_count = adaptor.GetDBCount();
+            //Logger.Info($"Database count:{db_count}");
+            //int current_db = adaptor.UseDB(0);
+            //Logger.Info($"Current Database:{current_db}");
+            //RedisKey[] keys = adaptor.GetKeys().ToArray();
+            //foreach (RedisKey key in keys)
+            //{
+            //    Logger.Info(adaptor.KeyType(key) + " " + key.ToString() + ":[" + adaptor.Get(key) + "]");
+            //}
+            //Console.WriteLine("************** Bye! **************");
         }
     }
 }

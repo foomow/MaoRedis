@@ -4,12 +4,16 @@ using System.Text;
 
 namespace MaoRedisMianBan
 {
+    public class ListLeagueList : List<League>
+    {
+    }
+
     public class League
     {
-        public string Name;
-        public List<Division> Divisions;
+        public string Name { get; set; }
+        public List<Division> Divisions { get; set; }
 
-        public League(string name, List<Division> divisions)
+    public League(string name, List<Division> divisions)
         {
             Name = name;
             Divisions = divisions;
@@ -18,10 +22,10 @@ namespace MaoRedisMianBan
 
     public class Division
     {
-        public string Name;
-        public List<Team> Teams;
+        public string Name { get; set; }
+    public List<Team> Teams { get; set; }
 
-        public Division(string name, List<Team> teams)
+    public Division(string name, List<Team> teams)
         {
             Name = name;
             Teams = teams;
@@ -30,7 +34,7 @@ namespace MaoRedisMianBan
 
     public class Team
     {
-        public string Name;
+        public string Name { get; set; }
 
         public Team(string name)
         {

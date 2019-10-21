@@ -9,7 +9,6 @@
 
     <DockPanel>
         <DockPanel.Resources>
-            <local:MainWindow x:Key="MyList"/>
 
             <HierarchicalDataTemplate DataType="{x:Type local:League}" ItemsSource = "{Binding Path=Divisions}">
                 <TextBlock Text="{Binding Path=Name}"/>
@@ -24,13 +23,13 @@
             </DataTemplate>
         </DockPanel.Resources>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Left" MinWidth="200">
-            <Menu Name="menu1" Margin="10,10,10,10">
-                <MenuItem Header="My Soccer Leagues"
-                  ItemsSource="{Binding Source={StaticResource MyList}}" />
+            <Menu Name="menu1" DockPanel.Dock="Top" Margin="10,10,10,10">
+                <MenuItem Name="MyMenuItems" Header="My Soccer Leagues"
+                   />
             </Menu>
 
             <TreeView>
-                <TreeViewItem ItemsSource="{Binding Source={StaticResource MyList}}" Header="My Soccer Leagues" />
+                <TreeViewItem Name="MyTreeViewItems"  Header="My Soccer Leagues" />
             </TreeView>
         </StackPanel>
 
