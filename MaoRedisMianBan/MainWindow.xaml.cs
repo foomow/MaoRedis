@@ -22,34 +22,39 @@ namespace MaoRedisMianBan
     /// </summary>
     public partial class MainWindow : Window
     {
-        List<Server> servers = new List<Server>();
+        List<R_Server> servers = new List<R_Server>();
         public MainWindow()
         {
             InitializeComponent();
 
-            //RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183:6379", "MukAzxGMOL2");
-            RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90:6379");
+            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183:6379", "MukAzxGMOL2");
+            //RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90:6379");
             adaptor.Connect();
-            Server server = new Server("192.168.3.90:6379", new List<Database>());
+            R_Server server = new R_Server(adaptor.Name, new List<R_Database>());
             int db_count = adaptor.GetDBCount();
             for (int i = 0; i < db_count; i++)
             {
-                Database db = new Database($"db_{i}", new List<Key>(), new List<SubKey>());
+                R_Database db = new R_Database($"db_{i}", new List<R_Key>(), new List<R_SubKey>());
                 adaptor.UseDB(i);
-                RedisKey[] keys = adaptor.GetKeys().ToArray();
-                db.Name += $" ({keys.Length})";
+                RedisKey[] keys = adaptor.GetKeys().ToArray();                
                 foreach (RedisKey key in keys)
                 {
-                    Key _key = new Key(key.ToString(), adaptor.Get(key));
+                    R_Key _key = new R_Key(key.ToString(), adaptor.Get(key));
                     db.Keys.Add(_key);
                 }
+                db.Name += $"db_{i} ({keys.Length})";
                 server.Databases.Add(db);
             }
-            List<Server> servers = new List<Server>() { server };
+            List<R_Server> servers = new List<R_Server>() { server };
             MyMenuItems.ItemsSource = servers;
             MyTreeViewItems.Header = server.Name;
             MyTreeViewItems.ItemsSource = server.Databases;
 
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

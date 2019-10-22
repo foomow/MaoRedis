@@ -9,15 +9,18 @@
 
     <DockPanel>
         <DockPanel.Resources>
-            <HierarchicalDataTemplate DataType="{x:Type local:Server}" ItemsSource = "{Binding Path=Databases}">
+            <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
                 <TextBlock Text="{Binding Path=Name}"/>
             </HierarchicalDataTemplate>
 
-            <HierarchicalDataTemplate DataType="{x:Type local:Database}" ItemsSource = "{Binding Path=Keys}">
-                <TextBlock Text="{Binding Path=Name}"/>
+            <HierarchicalDataTemplate DataType="{x:Type local:R_Database}" ItemsSource = "{Binding Path=Keys}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Name}"/>
+                    <Button Content="reload" Click="Button_Click"></Button>
+                </StackPanel>
             </HierarchicalDataTemplate>
 
-            <DataTemplate DataType="{x:Type local:Key}">
+            <DataTemplate DataType="{x:Type local:R_Key}">
                 <TextBlock Text="{Binding Path=Name}"/>
             </DataTemplate>
         </DockPanel.Resources>
