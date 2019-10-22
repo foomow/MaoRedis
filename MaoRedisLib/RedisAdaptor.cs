@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -26,10 +27,10 @@ namespace MaoRedisLib
             mPort = port;
             Name = mIP + ":" + mPort;
             R_Socket = null;
-            Logger.Info($"Redis [{Name}] initialized");
+            Logger.Info($"Redis Adaptor [{Name}] initialized");
         }
 
-        private string Interact(string cmd)
+        private JObject Interact(string cmd)
         {
             string ret = "";
 
@@ -37,6 +38,11 @@ namespace MaoRedisLib
             R_Socket.ReceiveTimeout = ResponseTimeout;
 
             string stringSent = BuildSendString(cmd);
+
+            if (stringSent == "") return ParseResponse("");
+
+            string command = cmd.Trim(' ').Split(' ')[0].ToLower();
+
             byte[] bytesSent = Encoding.UTF8.GetBytes(stringSent);
             byte[] bytesReceived = new byte[ReceiveCacheSize];
 
@@ -71,24 +77,90 @@ namespace MaoRedisLib
                 ret = "-RequestTimeout exception thrown";
             }
 
-            if (ret.StartsWith('-'))
+            return ParseResponse(ret, command);
+        }
+
+        private JObject ParseResponse(string response, string cmd = "")
+        {
+            JObject json = new JObject();
+            json.Add("result", "unknown");
+            json.Add("command", cmd);
+            json.Add("data", response);
+
+            if (response.StartsWith('-'))
             {
-                ret = ret.TrimStart('-');
+                json["result"] = "error";
+                json["data"] = response.TrimStart('-').TrimEnd('\n').TrimEnd('\r');
             }
 
-            if (ret.StartsWith('+')) ret = ret.TrimStart('+');
-            if (ret.StartsWith('$'))
+            else if (response.StartsWith('+'))
             {
-                int startIdx = ret.IndexOf("\r\n") + 2;
-                ret = ret.Substring(startIdx);
-                ret = ret.TrimEnd('\n').TrimEnd('\r');
+                json["result"] = "success";
+                json["data"] = response.TrimStart('+').TrimEnd('\n').TrimEnd('\r');
             }
+            else if (response.StartsWith('$'))
+            {
+                int startIdx = response.IndexOf("\r\n") + 2;
+                response = response.Substring(startIdx);
+                json["result"] = "success";
+                response = response.TrimEnd('\n').TrimEnd('\r');
+                json["data"] = response;
+                if (cmd == "info")
+                {
+                    JObject infos = new JObject();
+                    string[] sections = response.Split("# ");
+                    foreach (string section in sections)
+                    {
+                        if (section.Length > 0)
+                        {
+                            string[] lines = section.Split("\r\n");
+                            JObject sectJson = new JObject();
+                            foreach (string line in lines)
+                            {
+                                if (line.Length > 0 && line.Contains(':'))
+                                {
+                                    sectJson.Add(line.Split(':')[0], line.Split(':')[1]);
+                                }
+                            }
+                            infos.Add(lines[0], sectJson);
+                        }
+                    }
+                    json["data"] = infos;
+                }
+            }
+            //else if ("0123456789".IndexOf(response.Substring(0,1))>-1)
+            //{
+            //    json["result"] = "success";
+            //    response = response.TrimEnd('\n').TrimEnd('\r');
+            //    json["data"] = response;
+            //}
+            else if (response.StartsWith('*'))
+            {
+                json["result"] = "success";
+                JArray dataList = new JArray();
 
-            return ret;
-        }        
+                int arraylength = int.Parse(response.Split("\r\n")[0].TrimStart('*'));
+                response = response.Substring(response.IndexOf("\r\n") + 2);
+                for (int i = 0; i < arraylength; i++)
+                {
+                    int endIdx = response.LastIndexOf("\r\n") + 2;
+                    string[] prefix = new string[] { "+", "-", "$", "*", ":" };
+                    foreach (string p in prefix)
+                    {
+                        endIdx = (response.IndexOf($"\r\n{p}", 1) > -1) && (endIdx > response.IndexOf($"\r\n{p}", 1)) ? response.IndexOf($"\r\n{p}", 1) + 2 : endIdx;
+                    }
+                    string subdata = response.Substring(0, endIdx);
+                    dataList.Add(ParseResponse(subdata)["data"]);
+                    response = response.Substring(endIdx);
+                }
+                json["data"] = dataList;
+            }
+            return json;
+        }
 
         private string BuildSendString(string cmd)
         {
+            if (cmd == null || cmd.Trim(' ') == "") return "";
             string ret = "*";
             string[] strlist = cmd.Split(" ");
             ret += strlist.Length + "\r\n";
@@ -106,25 +178,20 @@ namespace MaoRedisLib
             foreach (IPAddress address in entry.AddressList)
             {
                 IPEndPoint ipe = new IPEndPoint(address, mPort);
-                Socket tempSocket =
-                    new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                R_Socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                R_Socket.Connect(ipe);
 
-                tempSocket.Connect(ipe);
-
-                if (tempSocket.Connected)
+                if (R_Socket.Connected)
                 {
-                    R_Socket = tempSocket;
                     Logger.Info($"{address.ToString()}:{mPort} connected");
                     if (password != "")
                     {
                         Logger.Info("auth result:" + Interact("auth " + password));
-                        Logger.Info("ping result:" + Interact("ping"));
-                        Logger.Info("info result:" + Interact("info"));
-                        Logger.Info("select result:" + Interact("select 0"));
-                        //Logger.Info("hmset result:" + Interact("hmset user:100001 name \"Jack\" age \"18\""));
-                        //Logger.Info("hmset result:" + Interact("hmset user:100002 name \"Tom\" age \"17\""));
-                        Logger.Info("scan result:" + Interact("scan 0 count 20"));
                     }
+                    Logger.Info("ping result:" + Interact("ping"));
+                    Logger.Info("info result:" + Interact("info"));
+
+
                     break;
                 }
                 else
@@ -135,21 +202,24 @@ namespace MaoRedisLib
             return true;
         }
 
-        public int GetDBCount()
+        public int UseDB(int db_number)
         {
-            int ret = 0;
+            Logger.Info("select result:" + Interact($"select {db_number}"));
+            return db_number;
+        }
+
+        public JObject GetKeys()
+        {
+            JObject ret = Interact("keys *");
+            Logger.Info("keys result:" + ret);
             return ret;
         }
 
-        public int UseDB(int db_number)
+        public JObject ScanKeys(int cursor, int count = 10)
         {
-            return 0;
-        }
-
-        public RO_RecordInfo[] GetKeys()
-        {
-            RO_RecordInfo[] keys = new RO_RecordInfo[0];
-            return keys;
+            JObject ret = Interact($"scan {cursor} count {count}");
+            Logger.Info("scan result:" + ret);
+            return ret;
         }
 
         public string Get(string key)
