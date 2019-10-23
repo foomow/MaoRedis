@@ -13,7 +13,7 @@
                 <TextBlock Text="{Binding Path=Name}"/>
             </HierarchicalDataTemplate>
 
-            <HierarchicalDataTemplate DataType="{x:Type local:R_Database}" ItemsSource = "{Binding Path=Keys}">
+            <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
                 <Grid MinWidth="200">
                     <TextBlock Text="{Binding Path=Name}"/>
                     <Button Content="reload" Click="Button_Click" HorizontalAlignment="Right"></Button>

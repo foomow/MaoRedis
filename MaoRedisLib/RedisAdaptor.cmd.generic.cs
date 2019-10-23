@@ -33,7 +33,11 @@ namespace MaoRedisLib
 
         public JObject Get(string key)
         {
-            return Interact($"get {key.Replace(" ", "%20")}");
+            JObject typeJson = Interact($"type {key.Replace(" ", "%20")}");
+            if (typeJson["data"].ToString() == "hash")
+                return Interact($"hgetall {key.Replace(" ", "%20")}");
+            else
+                return Interact($"get {key.Replace(" ", "%20")}");
         }
 
         public JObject Set(string key, string value)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,43 +17,37 @@ namespace MaoRedisMianBan
         }
     }
 
-    public class R_Database
+    public class R_Database : R_Folder
     {
-        public string Name { get; set; }
-        public List<R_Key> Keys { get; set; }
-        public List<R_SubKey> SubKeys { get; set; }
-
-        public R_Database(string name, List<R_Key> keys,List<R_SubKey> subKeys)
+        public R_Database(string name, List<R_Record> records) : base(name, records)
         {
-            Name = name;
-            Keys = keys;
-            SubKeys = subKeys;
         }
     }
 
-    public class R_Key
+    public abstract class R_Record
     {
         public string Name { get; set; }
-        public string Value { get; set; }
+    }
 
-        public R_Key(string name,string value)
+    public class R_Key: R_Record
+    {
+        public JToken Value { get; set; }
+
+        public R_Key(string name, JToken value)
         {
             Name = name;
             Value = value;
         }
     }
 
-    public class R_SubKey
+    public class R_Folder : R_Record
     {
-        public string Name { get; set; }
-        public string Value { get; set; }
-        public List<R_SubKey> SubKeys { get; set; }
+        public List<R_Record> Records { get; set; }
 
-        public R_SubKey(string name, string value, List<R_SubKey> subKeys)
+        public R_Folder(string name,  List<R_Record> records)
         {
             Name = name;
-            Value = value;
-            SubKeys = subKeys;
+            Records = records;
         }
     }
 }
