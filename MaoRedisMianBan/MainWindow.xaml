@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MaoRedisMianBan"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" FontSize="16">
 
     <DockPanel>
         <DockPanel.Resources>
@@ -14,10 +14,10 @@
             </HierarchicalDataTemplate>
 
             <HierarchicalDataTemplate DataType="{x:Type local:R_Database}" ItemsSource = "{Binding Path=Keys}">
-                <StackPanel Orientation="Horizontal">
+                <Grid MinWidth="200">
                     <TextBlock Text="{Binding Path=Name}"/>
-                    <Button Content="reload" Click="Button_Click"></Button>
-                </StackPanel>
+                    <Button Content="reload" Click="Button_Click" HorizontalAlignment="Right"></Button>
+                </Grid>
             </HierarchicalDataTemplate>
 
             <DataTemplate DataType="{x:Type local:R_Key}">

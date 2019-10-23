@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaoRedisLib", "MaoRedisLib\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp", "TestApp\TestApp.csproj", "{4C33E63E-9590-49A4-B75A-C0E98475735A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaoRedisMianBan", "MaoRedisMianBan\MaoRedisMianBan.csproj", "{4BB4CA11-5663-42C8-A8C7-83E89C5EF856}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaoRedisMianBan", "MaoRedisMianBan\MaoRedisMianBan.csproj", "{4BB4CA11-5663-42C8-A8C7-83E89C5EF856}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

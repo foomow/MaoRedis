@@ -10,12 +10,11 @@ using System.Threading.Tasks;
 
 namespace MaoRedisLib
 {
-    public class RedisAdaptor
+    public partial class RedisAdaptor
     {
         public string Name;
         public ushort RequestTimeout = 5000;
         public ushort ResponseTimeout = 5000;
-        public ushort ReceiveCacheSize = 4096;
 
         private readonly string mIP;
         private readonly ushort mPort;
@@ -30,10 +29,53 @@ namespace MaoRedisLib
             Logger.Info($"Redis Adaptor [{Name}] initialized");
         }
 
-        private JObject Interact(string cmd)
+        private string ReceiveData(int length = -1)
         {
             string ret = "";
+            int bytes = 0;
+            byte[] bytesReceived;
+            if (length >= 0)
+            {
+                bytesReceived = new byte[length + 2];
 
+                //Logger.Info($"waiting for response data...");
+                try
+                {
+                    bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                }
+                catch (Exception)
+                {
+                    ret = "-ResponseTimeout exception thrown";
+                }
+                //Logger.Info($"received data {bytes} bytes");
+                ret += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
+
+
+            }
+            else
+            {
+                bytesReceived = new byte[1];
+                do
+                {
+                    try
+                    {
+                        bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                    }
+                    catch (Exception)
+                    {
+                        ret = "-ResponseTimeout exception thrown";
+                        break;
+                    }
+                    ret += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
+                } while (!ret.EndsWith("\r\n"));
+            }
+            ret = ret.TrimEnd('\n').TrimEnd('\r');
+            return ret;
+        }
+
+
+        private JObject Interact(string cmd)
+        {
             R_Socket.SendTimeout = RequestTimeout;
             R_Socket.ReceiveTimeout = ResponseTimeout;
 
@@ -44,71 +86,53 @@ namespace MaoRedisLib
             string command = cmd.Trim(' ').Split(' ')[0].ToLower();
 
             byte[] bytesSent = Encoding.UTF8.GetBytes(stringSent);
-            byte[] bytesReceived = new byte[ReceiveCacheSize];
 
             try
             {
                 R_Socket.Send(bytesSent);
-                Logger.Info($"message sent:{cmd}");
-
-                int bytes;
-                string page = "";
-
-                do
-                {
-                    Logger.Info($"waiting for response data...");
-                    try
-                    {
-                        bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
-                    }
-                    catch (Exception)
-                    {
-                        ret = "-ResponseTimeout exception thrown";
-                        break;
-                    }
-                    Logger.Info($"received data {bytes} bytes");
-                    page += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
-                }
-                while (bytes > 0 && !page.EndsWith("\r\n"));
-                if (ret == "") ret = page;
+                //Logger.Info($"message sent:{stringSent}");
             }
             catch (Exception)
             {
-                ret = "-RequestTimeout exception thrown";
+                JObject json = new JObject();
+                json.Add("result", "error");
+                json.Add("command", command);
+                json.Add("data", "RequestTimeout exception thrown");
+                return json;
             }
 
-            return ParseResponse(ret, command);
+            return ParseResponse(command);
         }
 
-        private JObject ParseResponse(string response, string cmd = "")
+        private JObject ParseResponse(string cmd = "")
         {
             JObject json = new JObject();
             json.Add("result", "unknown");
             json.Add("command", cmd);
-            json.Add("data", response);
 
-            if (response.StartsWith('-'))
+            string data = ReceiveData();
+
+            json.Add("data", data);
+
+            if (data.StartsWith('-'))
             {
                 json["result"] = "error";
-                json["data"] = response.TrimStart('-').TrimEnd('\n').TrimEnd('\r');
+                json["data"] = data.TrimStart('-');
             }
-
-            else if (response.StartsWith('+'))
+            else if (data.StartsWith('+'))
             {
                 json["result"] = "success";
-                json["data"] = response.TrimStart('+').TrimEnd('\n').TrimEnd('\r');
+                json["data"] = data.TrimStart('+');
             }
-            else if (response.StartsWith('$'))
+            else if (data.StartsWith('$'))
             {
-                int startIdx = response.IndexOf("\r\n") + 2;
-                response = response.Substring(startIdx);
                 json["result"] = "success";
-                response = response.TrimEnd('\n').TrimEnd('\r');
-                json["data"] = response;
+                int length = int.Parse(data.TrimStart('$'));
+                json["data"] = ReceiveData(length);
                 if (cmd == "info")
                 {
                     JObject infos = new JObject();
-                    string[] sections = response.Split("# ");
+                    string[] sections = json["data"].ToString().Split("# ");
                     foreach (string section in sections)
                     {
                         if (section.Length > 0)
@@ -128,32 +152,29 @@ namespace MaoRedisLib
                     json["data"] = infos;
                 }
             }
-            //else if ("0123456789".IndexOf(response.Substring(0,1))>-1)
-            //{
-            //    json["result"] = "success";
-            //    response = response.TrimEnd('\n').TrimEnd('\r');
-            //    json["data"] = response;
-            //}
-            else if (response.StartsWith('*'))
+            else if (data.StartsWith('*'))
             {
                 json["result"] = "success";
-                JArray dataList = new JArray();
+                int arraylength = int.Parse(data.TrimStart('*'));
 
-                int arraylength = int.Parse(response.Split("\r\n")[0].TrimStart('*'));
-                response = response.Substring(response.IndexOf("\r\n") + 2);
-                for (int i = 0; i < arraylength; i++)
+                if (cmd == "hgetall")
                 {
-                    int endIdx = response.LastIndexOf("\r\n") + 2;
-                    string[] prefix = new string[] { "+", "-", "$", "*", ":" };
-                    foreach (string p in prefix)
+                    JObject dataList = new JObject();
+                    for (int i = 0; i < arraylength / 2; i++)
                     {
-                        endIdx = (response.IndexOf($"\r\n{p}", 1) > -1) && (endIdx > response.IndexOf($"\r\n{p}", 1)) ? response.IndexOf($"\r\n{p}", 1) + 2 : endIdx;
+                        dataList.Add(ParseResponse()["data"].ToString(), ParseResponse()["data"].ToString());
                     }
-                    string subdata = response.Substring(0, endIdx);
-                    dataList.Add(ParseResponse(subdata)["data"]);
-                    response = response.Substring(endIdx);
+                    json["data"] = dataList;
                 }
-                json["data"] = dataList;
+                else
+                {
+                    JArray dataList = new JArray();
+                    for (int i = 0; i < arraylength; i++)
+                    {
+                        dataList.Add(ParseResponse()["data"]);
+                    }
+                    json["data"] = dataList;
+                }
             }
             return json;
         }
@@ -166,8 +187,9 @@ namespace MaoRedisLib
             ret += strlist.Length + "\r\n";
             foreach (string strpart in strlist)
             {
-                string str = strpart.Trim();
-                ret += "$" + str.Length + "\r\n" + str + "\r\n";
+                string str = strpart.Trim().Replace("%20", " ").Replace("%25", "%");
+                int len = Encoding.UTF8.GetByteCount(str);
+                ret += "$" + len + "\r\n" + str + "\r\n";
             }
             return ret;
         }
@@ -188,10 +210,8 @@ namespace MaoRedisLib
                     {
                         Logger.Info("auth result:" + Interact("auth " + password));
                     }
-                    Logger.Info("ping result:" + Interact("ping"));
-                    Logger.Info("info result:" + Interact("info"));
-
-
+                    //Logger.Info("ping result:" + Interact("ping"));
+                    //Logger.Info("info result:" + Interact("info"));
                     break;
                 }
                 else
@@ -200,66 +220,6 @@ namespace MaoRedisLib
                 }
             }
             return true;
-        }
-
-        public int UseDB(int db_number)
-        {
-            Logger.Info("select result:" + Interact($"select {db_number}"));
-            return db_number;
-        }
-
-        public JObject GetKeys()
-        {
-            JObject ret = Interact("keys *");
-            Logger.Info("keys result:" + ret);
-            return ret;
-        }
-
-        public JObject ScanKeys(int cursor, int count = 10)
-        {
-            JObject ret = Interact($"scan {cursor} count {count}");
-            Logger.Info("scan result:" + ret);
-            return ret;
-        }
-
-        public string Get(string key)
-        {
-            return "";
-        }
-
-        public RT_Hash[] GetHash(string key)
-        {
-            return new RT_Hash[0];
-        }
-
-        public void SetHash(string key, RT_Hash[] fields)
-        {
-
-        }
-
-        public RO_RecordInfo[] GetListAll(string key)
-        {
-            return new RO_RecordInfo[0];
-        }
-
-        public RO_RecordInfo GetListByIndex(string key, int index = 0)
-        {
-            return new RO_RecordInfo();
-        }
-
-        public bool Set(string key, string value)
-        {
-            return false;
-        }
-
-        public bool Del(string key)
-        {
-            return false;
-        }
-
-        public RT_Type KeyType(string key)
-        {
-            return new RT_Type();
         }
     }
 }
