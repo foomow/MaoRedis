@@ -35,8 +35,10 @@ namespace MaoRedisMianBan
             JObject infoJson = adaptor.Info();
 
             foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
-            {                
+            {
+                int db_number = int.Parse(dbInfo.Name.Replace("db",""));
                 R_Database db = new R_Database(dbInfo.Name+" (keys="+ dbInfo.Value.ToString().Split(',')[0].Replace("keys=", "") + ")", new List<R_Key>(), new List<R_SubKey>());
+                adaptor.UseDB(db_number);
                 server.Databases.Add(db);
             }
             //{
