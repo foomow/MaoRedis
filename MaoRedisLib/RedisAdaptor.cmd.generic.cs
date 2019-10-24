@@ -13,22 +13,19 @@ namespace MaoRedisLib
         }
 
         public JObject UseDB(int db_number)
-        {
-            Interact($"info all");
+        {            
             return Interact($"select {db_number}");
         }
 
         public JObject GetKeys()
         {
             JObject ret = Interact("keys *");
-            Logger.Info("keys result:" + ret);
             return ret;
         }
 
         public JObject ScanKeys(int cursor, int count = 10)
         {
             JObject ret = Interact($"scan {cursor} match * count {count}");
-            Logger.Info("scan result:" + ret);
             return ret;
         }
 

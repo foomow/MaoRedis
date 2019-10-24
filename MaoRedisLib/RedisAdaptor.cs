@@ -39,7 +39,7 @@ namespace MaoRedisLib
                 {
                     byte[] bytesReceived = ReceivedData.GetRange(0, length).ToArray();
                     ret = Encoding.UTF8.GetString(bytesReceived, 0, length);
-                    ReceivedData.RemoveRange(0, length);
+                    ReceivedData.RemoveRange(0, length+2);
                 }
             }
             else
@@ -54,6 +54,7 @@ namespace MaoRedisLib
                     byte[] bytesReceived = ReceivedData.GetRange(0, idx + 2).ToArray();
                     ret = Encoding.UTF8.GetString(bytesReceived, 0, idx + 2);
                     ReceivedData.RemoveRange(0, idx + 2);
+                    
                 }
 
             }
@@ -64,6 +65,7 @@ namespace MaoRedisLib
 
         private JObject Interact(string cmd)
         {
+            Logger.Info(cmd);
             R_Socket.SendTimeout = RequestTimeout;
             R_Socket.ReceiveTimeout = ResponseTimeout;
 
@@ -97,15 +99,11 @@ namespace MaoRedisLib
                 {
                     bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
                 }
-                catch (Exception e)
+                catch 
                 {
-                    JObject json = new JObject();
-                    json.Add("result", "error");
-                    json.Add("command", command);
-                    json.Add("data", "ReceiveTimeout exception thrown");
-                    return json;
+                    return ParseResponse(command);
                 }
-                ReceivedData.AddRange(bytesReceived.ToList().GetRange(0, bytes));                
+                ReceivedData.AddRange(bytesReceived.ToList().GetRange(0, bytes));
             } while (bytes == 1024);
             return ParseResponse(command);
         }
@@ -133,53 +131,71 @@ namespace MaoRedisLib
             else if (data.StartsWith('$'))
             {
                 json["result"] = "success";
-                int length = int.Parse(data.TrimStart('$'));
-                json["data"] = ParseData(length);
-                if (cmd == "info")
+                try
                 {
-                    JObject infos = new JObject();
-                    string[] sections = json["data"].ToString().Split("# ");
-                    foreach (string section in sections)
+                    int length = int.Parse(data.TrimStart('$'));
+                    json["data"] = ParseData(length);
+                    if (cmd == "info")
                     {
-                        if (section.Length > 0)
+                        JObject infos = new JObject();
+                        string[] sections = json["data"].ToString().Split("# ");
+                        foreach (string section in sections)
                         {
-                            string[] lines = section.Split("\r\n");
-                            JObject sectJson = new JObject();
-                            foreach (string line in lines)
+                            if (section.Length > 0)
                             {
-                                if (line.Length > 0 && line.Contains(':'))
+                                string[] lines = section.Split("\r\n");
+                                JObject sectJson = new JObject();
+                                foreach (string line in lines)
                                 {
-                                    sectJson.Add(line.Split(':')[0], line.Split(':')[1]);
+                                    if (line.Length > 0 && line.Contains(':'))
+                                    {
+                                        sectJson.Add(line.Split(':')[0], line.Split(':')[1]);
+                                    }
                                 }
+                                infos.Add(lines[0], sectJson);
                             }
-                            infos.Add(lines[0], sectJson);
                         }
+                        json["data"] = infos;
                     }
-                    json["data"] = infos;
+                }
+                catch
+                {
+                    json["result"] = "error";
+                    json["datar-eceived"] = json["data"];
+                    json["data"] = "parse failed";
                 }
             }
             else if (data.StartsWith('*'))
             {
                 json["result"] = "success";
-                int arraylength = int.Parse(data.TrimStart('*'));
+                try
+                {
+                    int arraylength = int.Parse(data.TrimStart('*'));
 
-                if (cmd == "hgetall")
-                {
-                    JObject dataList = new JObject();
-                    for (int i = 0; i < arraylength / 2; i++)
+                    if (cmd == "hgetall")
                     {
-                        dataList.Add(ParseResponse()["data"].ToString(), ParseResponse()["data"].ToString());
+                        JObject dataList = new JObject();
+                        for (int i = 0; i < arraylength / 2; i++)
+                        {
+                            dataList.Add(ParseResponse()["data"].ToString(), ParseResponse()["data"].ToString());
+                        }
+                        json["data"] = dataList;
                     }
-                    json["data"] = dataList;
+                    else
+                    {
+                        JArray dataList = new JArray();
+                        for (int i = 0; i < arraylength; i++)
+                        {
+                            dataList.Add(ParseResponse()["data"]);
+                        }
+                        json["data"] = dataList;
+                    }
                 }
-                else
+                catch
                 {
-                    JArray dataList = new JArray();
-                    for (int i = 0; i < arraylength; i++)
-                    {
-                        dataList.Add(ParseResponse()["data"]);
-                    }
-                    json["data"] = dataList;
+                    json["result"] = "error";
+                    json["datar-eceived"] = json["data"];
+                    json["data"] = "parse failed";
                 }
             }
             return json;
