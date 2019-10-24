@@ -19,6 +19,7 @@ namespace MaoRedisLib
         private readonly string mIP;
         private readonly ushort mPort;
         private Socket R_Socket;
+        private List<byte> ReceivedData;
 
         public RedisAdaptor(string ip_addr, ushort port = 6379)
         {
@@ -29,45 +30,32 @@ namespace MaoRedisLib
             Logger.Info($"Redis Adaptor [{Name}] initialized");
         }
 
-        private string ReceiveData(int length = -1)
+        private string ParseData(int length = -1)
         {
-            string ret = "";
-            int bytes = 0;
-            byte[] bytesReceived;
+            string ret = "-err\r\n";
             if (length >= 0)
             {
-                bytesReceived = new byte[length + 2];
-
-                //Logger.Info($"waiting for response data...");
-                try
+                if (ReceivedData.Count >= length)
                 {
-                    bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                    byte[] bytesReceived = ReceivedData.GetRange(0, length).ToArray();
+                    ret = Encoding.UTF8.GetString(bytesReceived, 0, length);
+                    ReceivedData.RemoveRange(0, length);
                 }
-                catch (Exception)
-                {
-                    ret = "-ResponseTimeout exception thrown";
-                }
-                //Logger.Info($"received data {bytes} bytes");
-                ret += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
-
-
             }
             else
             {
-                bytesReceived = new byte[1];
-                do
+                int idx = ReceivedData.IndexOf((byte)'\r');
+                while (idx != -1 && (idx + 1) < ReceivedData.Count && ReceivedData[idx + 1] != (byte)'\n')
                 {
-                    try
-                    {
-                        bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
-                    }
-                    catch (Exception)
-                    {
-                        ret = "-ResponseTimeout exception thrown";
-                        break;
-                    }
-                    ret += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
-                } while (!ret.EndsWith("\r\n"));
+                    idx = ReceivedData.IndexOf((byte)'\r', idx + 1);
+                }
+                if (idx != -1 && (idx + 1) < ReceivedData.Count && ReceivedData[idx + 1] == (byte)'\n')
+                {
+                    byte[] bytesReceived = ReceivedData.GetRange(0, idx + 2).ToArray();
+                    ret = Encoding.UTF8.GetString(bytesReceived, 0, idx + 2);
+                    ReceivedData.RemoveRange(0, idx + 2);
+                }
+
             }
             ret = ret.TrimEnd('\n').TrimEnd('\r');
             return ret;
@@ -90,7 +78,6 @@ namespace MaoRedisLib
             try
             {
                 R_Socket.Send(bytesSent);
-                //Logger.Info($"message sent:{stringSent}");
             }
             catch (Exception)
             {
@@ -100,7 +87,26 @@ namespace MaoRedisLib
                 json.Add("data", "RequestTimeout exception thrown");
                 return json;
             }
-
+            byte[] bytesReceived = new byte[1024];
+            ReceivedData = new List<byte>();
+            int bytes;
+            do
+            {
+                bytesReceived.Initialize();
+                try
+                {
+                    bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                }
+                catch (Exception e)
+                {
+                    JObject json = new JObject();
+                    json.Add("result", "error");
+                    json.Add("command", command);
+                    json.Add("data", "ReceiveTimeout exception thrown");
+                    return json;
+                }
+                ReceivedData.AddRange(bytesReceived.ToList().GetRange(0, bytes));                
+            } while (bytes == 1024);
             return ParseResponse(command);
         }
 
@@ -110,7 +116,7 @@ namespace MaoRedisLib
             json.Add("result", "unknown");
             json.Add("command", cmd);
 
-            string data = ReceiveData();
+            string data = ParseData();
 
             json.Add("data", data);
 
@@ -128,7 +134,7 @@ namespace MaoRedisLib
             {
                 json["result"] = "success";
                 int length = int.Parse(data.TrimStart('$'));
-                json["data"] = ReceiveData(length);
+                json["data"] = ParseData(length);
                 if (cmd == "info")
                 {
                     JObject infos = new JObject();

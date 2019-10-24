@@ -27,25 +27,37 @@ namespace MaoRedisMianBan
         {
             InitializeComponent();
 
-            //RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
-            //adaptor.Connect("MukAzxGMOL2");
-            RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
-            adaptor.Connect();
+            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
+            adaptor.Connect("MukAzxGMOL2");
+            //RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
+            //adaptor.Connect();
 
             R_Server server = new R_Server(adaptor.Name, new List<R_Database>());
-            JObject infoJson = adaptor.Info();
+            JObject infoJson = adaptor.Info("Keyspace");
 
             foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
             {
-                int db_number = int.Parse(dbInfo.Name.Replace("db",""));
+                int db_number = int.Parse(dbInfo.Name.Replace("db",""));                
                 R_Database db = new R_Database(dbInfo.Name+" (keys="+ dbInfo.Value.ToString().Split(',')[0].Replace("keys=", "") + ")",  new List<R_Record>());
-                adaptor.UseDB(db_number);
-                JArray keys = (JArray)adaptor.GetKeys()["data"];
+                int keyCount = int.Parse(dbInfo.Value.ToString().Split(',')[0].Replace("keys=", ""));
+
+                JObject useRet=adaptor.UseDB(db_number);
+                if (useRet.ContainsKey("data"))
+                {
+                    int adffd = 0;
+                }
+                JObject keysJson = adaptor.ScanKeys(0, keyCount);
+                JArray keys= new JArray();
+                if (keysJson["data"].Type == JTokenType.Array)
+                {
+                    keys = (JArray)keysJson["data"][1];
+                }
+                
                 foreach (JToken key in keys)
                 {
                     string keyName = key.ToString();
                     R_Folder folder = GetFolder(db, keyName);
-                    R_Key _key = new R_Key(key.ToString(), adaptor.Get(key.ToString())["data"]);
+                    R_Key _key = new R_Key(key.ToString(), null);
                     folder.Records.Add(_key);                    
                 }
                 server.Databases.Add(db);

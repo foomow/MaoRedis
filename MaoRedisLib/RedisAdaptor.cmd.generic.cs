@@ -7,13 +7,14 @@ namespace MaoRedisLib
 {
     public partial class RedisAdaptor
     {
-        public JObject Info()
+        public JObject Info(string section="all")
         {
-            return Interact($"info");
+            return Interact($"info {section}");
         }
 
         public JObject UseDB(int db_number)
         {
+            Interact($"info all");
             return Interact($"select {db_number}");
         }
 
@@ -26,7 +27,7 @@ namespace MaoRedisLib
 
         public JObject ScanKeys(int cursor, int count = 10)
         {
-            JObject ret = Interact($"scan {cursor} count {count}");
+            JObject ret = Interact($"scan {cursor} match * count {count}");
             Logger.Info("scan result:" + ret);
             return ret;
         }
@@ -36,6 +37,13 @@ namespace MaoRedisLib
             JObject typeJson = Interact($"type {key.Replace(" ", "%20")}");
             if (typeJson["data"].ToString() == "hash")
                 return Interact($"hgetall {key.Replace(" ", "%20")}");
+            else if (typeJson["data"].ToString() == "list")
+            {
+                int endIdx=int.Parse(Interact($"llen {key.Replace(" ", "%20")}")["data"].ToString());
+                return Interact($"lrange {key.Replace(" ", "%20")} 0 {endIdx}");
+            }
+            else if(typeJson["data"].ToString() == "sort")
+                return Interact($"smembers {key.Replace(" ", "%20")}");
             else
                 return Interact($"get {key.Replace(" ", "%20")}");
         }
