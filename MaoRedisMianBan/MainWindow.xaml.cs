@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,46 +28,43 @@ namespace MaoRedisMianBan
         {
             InitializeComponent();
 
-            //RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
-            //adaptor.Connect("MukAzxGMOL2");
-            RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
-            adaptor.Connect();
+            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
+            adaptor.Connect("MukAzxGMOL2");
+            //RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
+            //adaptor.Connect();
 
             R_Server server = new R_Server(adaptor.Name, new List<R_Database>());
             JObject infoJson = adaptor.Info("Keyspace");
 
             foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
             {
-                int db_number = int.Parse(dbInfo.Name.Replace("db",""));                
-                R_Database db = new R_Database(dbInfo.Name+" (keys="+ dbInfo.Value.ToString().Split(',')[0].Replace("keys=", "") + ")",  new List<R_Record>());
-                int keyCount = int.Parse(dbInfo.Value.ToString().Split(',')[0].Replace("keys=", ""));
-
+                int db_number = int.Parse(dbInfo.Name.Replace("db",""));
+                R_Database db = new R_Database(dbInfo.Name,  new List<R_Record>());
+                db.Count =int.Parse(dbInfo.Value.ToString().Split(",")[0].Remove(0,5));
+                if (db.Count > 100) continue;
                 JObject useRet=adaptor.UseDB(db_number);
-                if (useRet.ContainsKey("data"))
-                {
-                    int adffd = 0;
-                }
-                JObject keysJson = adaptor.ScanKeys(0, keyCount);
+                JObject keysJson = adaptor.GetKeys();
+                
                 JArray keys= new JArray();
                 if (keysJson["data"].Type == JTokenType.Array)
                 {
-                    keys = (JArray)keysJson["data"][1];
+                    keys = (JArray)keysJson["data"];
                 }
-                
                 foreach (JToken key in keys)
                 {
                     string keyName = key.ToString();
                     R_Folder folder = GetFolder(db, keyName);
                     R_Key _key = new R_Key(key.ToString(), null);
-                    folder.Records.Add(_key);                    
+                    folder.Records.Add(_key);
+                    
                 }
                 server.Databases.Add(db);
             }            
             List<R_Server> servers = new List<R_Server>() { server };
             MyMenuItems.ItemsSource = servers;
             MyTreeViewItems.Header = server.Name;
-            foreach(R_Folder folder in server.Databases)
-            SortFolder(folder);
+            foreach (R_Folder folder in server.Databases)
+                SortFolder(folder);
             MyTreeViewItems.ItemsSource = server.Databases;
         }
         private void SortFolder(R_Folder folder)
@@ -98,9 +96,5 @@ namespace MaoRedisMianBan
             return parentFolder;            
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
     }
 }

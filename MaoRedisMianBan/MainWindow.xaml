@@ -14,10 +14,10 @@
             </HierarchicalDataTemplate>
 
             <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
-                <Grid MinWidth="200">
+                <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding Path=Name}"/>
-                    <Button Content="reload" Click="Button_Click" HorizontalAlignment="Right"></Button>
-                </Grid>
+                    <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
+                </StackPanel>
             </HierarchicalDataTemplate>
 
             <DataTemplate DataType="{x:Type local:R_Key}">
@@ -29,7 +29,7 @@
                 <MenuItem Name="MyMenuItems" Header="Servers" />
             </Menu>
 
-            <TreeView Margin="10,10,10,10" BorderThickness="0">
+            <TreeView Margin="10,10,10,10" BorderThickness="0" Background="Blue">
                 <TreeViewItem Name="MyTreeViewItems" />
             </TreeView>
         </StackPanel>

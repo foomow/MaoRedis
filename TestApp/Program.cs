@@ -10,16 +10,16 @@ namespace TestApp
         static void Main(string[] args)
         {
             Console.WriteLine("************** Hello Chengdu! **************");
-            //RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
-            //adaptor.Connect("MukAzxGMOL2");
-            RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
-            adaptor.Connect();
+            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
+            adaptor.Connect("MukAzxGMOL2");
+            //RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
+            //adaptor.Connect();
             Console.WriteLine("info :"+adaptor.Info());
             
-            Console.WriteLine("usedb :" + adaptor.UseDB(0));
+            Console.WriteLine("usedb :" + adaptor.UseDB(9));
 
-            //adaptor.GetKeys();
-            Console.WriteLine(adaptor.ScanKeys(0));            
+            Console.WriteLine(adaptor.GetKeys());
+            //Console.WriteLine(adaptor.ScanKeys(0));            
             //adaptor.SetHash("HashC",new KeyValuePair<string, string>[] { new KeyValuePair<string, string>("name","茂大叔mao"),new KeyValuePair<string, string>("city", "成都cd") });
             //Console.WriteLine(adaptor.Get("message"));
             //Console.WriteLine(adaptor.Get("spacemsg"));
