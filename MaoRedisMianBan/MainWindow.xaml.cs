@@ -28,73 +28,54 @@ namespace MaoRedisMianBan
         {
             InitializeComponent();
 
-            RedisAdaptor adaptor = new RedisAdaptor("13.231.216.183");
-            adaptor.Connect("MukAzxGMOL2");
-            //RedisAdaptor adaptor = new RedisAdaptor("192.168.3.90");
-            //adaptor.Connect();
-
-            R_Server server = new R_Server(adaptor.Name, new List<R_Database>());
-            JObject infoJson = adaptor.Info("Keyspace");
-
-            foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
-            {
-                int db_number = int.Parse(dbInfo.Name.Replace("db",""));
-                R_Database db = new R_Database(dbInfo.Name,  new List<R_Record>());
-                db.Count =int.Parse(dbInfo.Value.ToString().Split(",")[0].Remove(0,5));
-                if (db.Count > 100) continue;
-                JObject useRet=adaptor.UseDB(db_number);
-                JObject keysJson = adaptor.GetKeys();
-                
-                JArray keys= new JArray();
-                if (keysJson["data"].Type == JTokenType.Array)
-                {
-                    keys = (JArray)keysJson["data"];
-                }
-                foreach (JToken key in keys)
-                {
-                    string keyName = key.ToString();
-                    R_Folder folder = GetFolder(db, keyName);
-                    R_Key _key = new R_Key(key.ToString(), null);
-                    folder.Records.Add(_key);
-                    
-                }
-                server.Databases.Add(db);
-            }            
-            List<R_Server> servers = new List<R_Server>() { server };
-            MyMenuItems.ItemsSource = servers;
-            MyTreeViewItems.Header = server.Name;
-            foreach (R_Folder folder in server.Databases)
-                SortFolder(folder);
-            MyTreeViewItems.ItemsSource = server.Databases;
+            MyTreeViewItems.ItemsSource = servers;
         }
-        private void SortFolder(R_Folder folder)
+
+        public void RefreshTree()
         {
-            folder.Records.Sort((x,y)=> {
-                if (x.GetType() == typeof(R_Folder) && y.GetType() == typeof(R_Key)) return -1;
-                else if (y.GetType() == typeof(R_Folder) && x.GetType() == typeof(R_Key)) return 1;
-                else return x.Name.CompareTo(y.Name); });
-            List<R_Record> folders = folder.Records.FindAll(x=>x.GetType()==typeof(R_Folder));
-            foreach (R_Folder subFolder in folders)
+            MyTreeViewItems.Items.Refresh();
+        }
+        public void RemoveServer(R_Server server) {
+            servers.Remove(server);
+            RefreshTree();
+        }
+
+        
+
+        private void BTN_Add_Click(object sender, RoutedEventArgs e)
+        {
+            AddServerDlg dlg = new AddServerDlg();
+            dlg.Owner = this;
+            if ((bool)dlg.ShowDialog())
             {
-                SortFolder(subFolder);
+                string addr = dlg.Addr;
+                ushort port = dlg.Port;
+                string serverName = dlg.ServerName;
+                if (serverName == "")
+                    serverName = addr + ":" + port;
+                string psw = dlg.Password;
+                R_Server server = new R_Server(serverName, new List<R_Database>())
+                {
+                    Addr = addr,
+                    Port = port,
+                    Psw = psw
+                };
+
+                if (servers.Exists(x => x.Addr == server.Addr && x.Port == server.Port))
+                {
+                    servers.Find(x => x.Addr == server.Addr && x.Port == server.Port).Databases = server.Databases;
+                }
+                else
+                {
+                    servers.Add(server);
+                }
+                RefreshTree();
             }
         }
-        private R_Folder GetFolder(R_Folder parentFolder, string keyName)
-        {
-            if (keyName.Contains(":"))
-            {
-                int idx = keyName.IndexOf(":");
-                string folderName = keyName.Substring(0,idx);
-                R_Record subFolder = parentFolder.Records.Find(x => x.Name.Equals(folderName) && x.GetType() == typeof(R_Folder));
-                if (subFolder== null)
-                {
-                    subFolder = new R_Folder(folderName, new List<R_Record>());
-                    parentFolder.Records.Add(subFolder);
-                }
-                return GetFolder((R_Folder)subFolder, keyName.Substring(idx + 1));
-            }
-            return parentFolder;            
-        }
 
+        private void AddServerDlg_Close_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
     }
 }

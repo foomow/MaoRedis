@@ -8,37 +8,30 @@
         Title="MainWindow" Height="450" Width="800" FontSize="16">
 
     <DockPanel>
-        <DockPanel.Resources>
-            <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
-                <TextBlock Text="{Binding Path=Name}"/>
-            </HierarchicalDataTemplate>
-
-            <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Path=Name}"/>
-                    <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
-                </StackPanel>
-            </HierarchicalDataTemplate>
-
-            <DataTemplate DataType="{x:Type local:R_Key}">
-                <TextBlock Text="{Binding Path=Name}"/>
-            </DataTemplate>
-        </DockPanel.Resources>
-        <StackPanel Orientation="Vertical" DockPanel.Dock="Left" MinWidth="200">
-            <Menu Name="menu1" Margin="10,10,10,10">
-                <MenuItem Name="MyMenuItems" Header="Servers" />
-            </Menu>
-
-            <TreeView Margin="10,10,10,10" BorderThickness="0" Background="Blue">
-                <TreeViewItem Name="MyTreeViewItems" />
-            </TreeView>
-        </StackPanel>
-
-        <ToolBar DockPanel.Dock="Top">
-            <Label Content="Key:"/>
-            <TextBox BorderBrush="Black" BorderThickness="1" />
-        </ToolBar>
-        <TextBox DockPanel.Dock="Bottom"/>
+        <Grid DockPanel.Dock="Bottom" Margin="5,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Margin="5,5">
+                <Button Name="BTN_Add" Width="80" Content="Add" HorizontalAlignment="Left" VerticalAlignment="Top" Click="BTN_Add_Click"/>
+                <TextBox Name="TB_Addr" Width="180" Text="192.168.3.90:6379" />
+            </StackPanel>
+            <Border Grid.Row="1" Grid.Column="0" Margin="5,5" BorderThickness="1" BorderBrush="Gray">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <TreeView BorderThickness="0">
+                        <TreeViewItem Name="MyTreeViewItems" Header="Servers" IsExpanded="True" />
+                    </TreeView>
+                </ScrollViewer>
+            </Border>
+            <GridSplitter Grid.Column="1" Grid.RowSpan="2" Width="5" HorizontalAlignment="Stretch"/>
+            <TextBox Grid.RowSpan="2" Grid.Column="2" Margin="5,5"/>
+        </Grid>
     </DockPanel>
 
 </Window>
