@@ -17,9 +17,9 @@ namespace MaoRedisLib
             return Interact($"select {db_number}");
         }
 
-        public JObject GetKeys()
+        public JObject GetKeys(string pattern="*")
         {
-            JObject ret = Interact("keys *");
+            JObject ret = Interact($"keys {pattern}");
             return ret;
         }
 

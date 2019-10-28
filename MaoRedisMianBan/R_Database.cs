@@ -10,7 +10,7 @@ namespace MaoRedisMianBan
         {
             get; set;
         }
-        public R_Database(string name, List<R_Record> records) : base(name, records)
+        public R_Database(string name, List<R_Record> records,R_Server server) : base(name, records,server)
         {
         }
     }

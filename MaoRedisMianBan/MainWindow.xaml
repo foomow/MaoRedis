@@ -26,7 +26,7 @@
                 <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
                 <StackPanel.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Refresh" Click="MI_KeyRefresh" />
+                        <MenuItem Header="Refresh" Click="MI_FolderRefresh" />
                         <Separator />
                         <MenuItem Header="Delete" Click="MI_KeyDelete"  />
                     </ContextMenu>

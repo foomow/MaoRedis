@@ -208,25 +208,53 @@ namespace MaoRedisMianBan
             File.WriteAllText(FileName, cfgJson.ToString());
         }
 
-        private void MI_KeyRefresh(object sender, RoutedEventArgs e)
+        private void MI_FolderRefresh(object sender, RoutedEventArgs e)
         {
             R_Record record = (R_Record)((MenuItem)sender).DataContext;
-            LoadKeys(record);
+            RefreshKey(record);            
         }
 
-        private void LoadKeys(R_Record record)
+        private void RefreshKey(R_Record record)
         {
             if (record.GetType() == typeof(R_Folder))
             {
-                foreach (R_Record r in ((R_Folder)record).Records)
+                ((R_Folder)record).Server.RefreshKeys((R_Folder)record);
+                RefreshTree();
+                string path = "db" + ((R_Folder)record).Pattern;
+                string[] segs = path.Split(':');
+                TreeViewItem item = (TreeViewItem)MyTreeViewItems.ItemContainerGenerator.ContainerFromItem(((R_Folder)record).Server);
+                item.ExpandSubtree();
+                R_Folder folder = ((R_Folder)record).Server.Databases.Find(x=>x.Name==segs[0]);
+                if (folder != null)
                 {
-                    LoadKeys(r);
+                    item = (TreeViewItem)item.ItemContainerGenerator.ContainerFromItem(folder);
+                    if (item != null)
+                    {                        
+                        for (int i = 1; i < segs.Length; i++)
+                        {
+                            item.ExpandSubtree();
+                            string seg = segs[i];
+                            folder = (R_Folder)folder.Records.Find(x => x.Name == seg);
+                            if (folder != null)
+                            {
+                                TreeViewItem nextitem = (TreeViewItem)item.ItemContainerGenerator.ContainerFromItem(folder);
+                                if (nextitem != null)
+                                {
+                                    item = nextitem;
+                                }
+                                else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
+                item.Focus();
+                item.IsSelected = true;
             }
-            else
+            if (record.GetType() == typeof(R_Key))
             {
-                R_Key key = (R_Key)record;
-                key.Server.LoadKey(key);
+                
             }
         }
 

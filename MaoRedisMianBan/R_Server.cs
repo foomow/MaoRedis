@@ -52,7 +52,8 @@ namespace MaoRedisMianBan
             foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
             {
                 int db_number = int.Parse(dbInfo.Name.Replace("db", ""));
-                R_Database db = new R_Database(dbInfo.Name, new List<R_Record>());
+                R_Database db = new R_Database(dbInfo.Name, new List<R_Record>(),this);
+                db.Pattern = db_number.ToString();
                 db.Count = int.Parse(dbInfo.Value.ToString().Split(",")[0].Remove(0, 5));
                 if (db.Count > 100) continue;
                 JObject useRet = _redis.UseDB(db_number);
@@ -68,9 +69,7 @@ namespace MaoRedisMianBan
                     string keyName = key.ToString();
                     R_Folder folder = GetFolder(db, keyName);
                     R_Key _key = new R_Key(key.ToString(), null, this);
-
                     folder.Records.Add(_key);
-
                 }
                 Databases.Add(db);
             }
@@ -85,12 +84,42 @@ namespace MaoRedisMianBan
             _psw = psw;
             Connect();
         }
-        public JObject LoadKey(R_Key key)
+        public void RefreshKeys(R_Folder folder)
         {
-            JObject typeJson = _redis.KeyType(key.Name);
-            if (typeJson["data"].ToString() == "")
-            { }
-            return _redis.Get(key.Name);
+            string pattern = "*";
+            int db_number;
+            if (folder.Pattern.Contains(":"))
+            {
+                int idx = folder.Pattern.IndexOf(":");
+                db_number = int.Parse(folder.Pattern.Substring(0, idx));
+                pattern = folder.Pattern.Substring(idx + 1)+"*";
+            }
+            else
+            {
+                db_number = int.Parse(folder.Pattern);
+            }
+
+            _redis.UseDB(db_number);
+            JObject keysJson = _redis.GetKeys(pattern);
+
+            folder.Records.Clear();
+            JArray keys = new JArray();
+            if (keysJson["data"].Type == JTokenType.Array)
+            {
+                keys = (JArray)keysJson["data"];
+            }
+            string prefix = pattern.Replace("*","");
+            foreach (JToken key in keys)
+            {
+                string keyName = key.ToString();
+                keyName = keyName.Substring(prefix.Length).TrimStart(':');
+
+                R_Folder destfolder = GetFolder(folder, keyName);
+                R_Key _key = new R_Key(key.ToString(), null, this);
+                destfolder.Records.Add(_key);
+            }
+            foreach (R_Folder subfolder in Databases)
+                SortFolder(subfolder);
         }
         private R_Folder GetFolder(R_Folder parentFolder, string keyName)
         {
@@ -102,6 +131,7 @@ namespace MaoRedisMianBan
                 if (subFolder == null)
                 {
                     subFolder = new R_Folder(folderName, new List<R_Record>(),this);
+                    ((R_Folder)subFolder).Pattern = parentFolder.Pattern + ":" + folderName;
                     parentFolder.Records.Add(subFolder);
                 }
                 return GetFolder((R_Folder)subFolder, keyName.Substring(idx + 1));

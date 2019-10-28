@@ -6,6 +6,7 @@ namespace MaoRedisMianBan
     {
         public List<R_Record> Records { get; set; }
         public R_Server Server { get; }
+        public string Pattern { get; set; }
         public int Count
         {
             get
@@ -26,5 +27,6 @@ namespace MaoRedisMianBan
             Records = records;
             Server = server;
         }
+
     }
 }
