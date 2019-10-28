@@ -4,28 +4,6 @@
              xmlns:local="clr-namespace:MaoRedisMianBan"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
-            <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}">
-                <TextBlock.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="{Binding Path=MIHeader}" Click="MI_ServerConnect" />
-                        <MenuItem Header="Edit" Click="MI_ServerEdit"  />
-                        <Separator />
-                        <MenuItem Header="Remove" Click="MI_ServerRemove"  />
-                    </ContextMenu>
-                </TextBlock.ContextMenu>
-            </TextBlock>
-        </HierarchicalDataTemplate>
-
-        <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Path=Name}"/>
-                <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
-            </StackPanel>
-        </HierarchicalDataTemplate>
-
-        <DataTemplate DataType="{x:Type local:R_Key}">
-            <TextBlock Text="{Binding Path=Name}"/>
-        </DataTemplate>
+        
     </Application.Resources>
 </Application>

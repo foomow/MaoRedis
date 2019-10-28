@@ -5,8 +5,39 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MaoRedisMianBan"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" FontSize="16">
+        Title="MainWindow" Height="450" Width="800" FontSize="16" Closing="Window_Closing">
+    <Window.Resources>
+        <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
+            <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}">
+                <TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{Binding Path=MIHeader}" Click="MI_ServerConnect" />
+                        <MenuItem Header="Edit" Click="MI_ServerEdit"  />
+                        <Separator />
+                        <MenuItem Header="Remove" Click="MI_ServerRemove"  />
+                    </ContextMenu>
+                </TextBlock.ContextMenu>
+            </TextBlock>
+        </HierarchicalDataTemplate>
 
+        <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Path=Name}"/>
+                <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
+                <StackPanel.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Refresh" Click="MI_KeyRefresh" />
+                        <Separator />
+                        <MenuItem Header="Delete" Click="MI_KeyDelete"  />
+                    </ContextMenu>
+                </StackPanel.ContextMenu>
+            </StackPanel>
+        </HierarchicalDataTemplate>
+
+        <DataTemplate DataType="{x:Type local:R_Key}">
+            <TextBlock Text="{Binding Path=Name}"/>
+        </DataTemplate>
+    </Window.Resources>
     <DockPanel>
         <Grid DockPanel.Dock="Bottom" Margin="5,5">
             <Grid.ColumnDefinitions>
@@ -24,7 +55,14 @@
             </StackPanel>
             <Border Grid.Row="1" Grid.Column="0" Margin="5,5" BorderThickness="1" BorderBrush="Gray">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <TreeView BorderThickness="0">
+                    <TreeView BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Disabled" Margin="5,5,5,5">
+                        <TreeView.Template>
+                            <ControlTemplate>
+                                <Border BorderThickness="0" SnapsToDevicePixels="true">
+                                    <ItemsPresenter/>
+                                </Border>
+                            </ControlTemplate>
+                        </TreeView.Template>
                         <TreeViewItem Name="MyTreeViewItems" Header="Servers" IsExpanded="True" />
                     </TreeView>
                 </ScrollViewer>

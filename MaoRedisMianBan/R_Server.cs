@@ -48,7 +48,7 @@ namespace MaoRedisMianBan
             _redis = new RedisAdaptor(_addr, _port);
             _redis.Connect(_psw);
             JObject infoJson = _redis.Info("Keyspace");
-
+            if (infoJson["result"].ToString() == "error") return;
             foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
             {
                 int db_number = int.Parse(dbInfo.Name.Replace("db", ""));
@@ -67,7 +67,8 @@ namespace MaoRedisMianBan
                 {
                     string keyName = key.ToString();
                     R_Folder folder = GetFolder(db, keyName);
-                    R_Key _key = new R_Key(key.ToString(), null);
+                    R_Key _key = new R_Key(key.ToString(), null, this);
+
                     folder.Records.Add(_key);
 
                 }
@@ -84,7 +85,13 @@ namespace MaoRedisMianBan
             _psw = psw;
             Connect();
         }
-
+        public JObject LoadKey(R_Key key)
+        {
+            JObject typeJson = _redis.KeyType(key.Name);
+            if (typeJson["data"].ToString() == "")
+            { }
+            return _redis.Get(key.Name);
+        }
         private R_Folder GetFolder(R_Folder parentFolder, string keyName)
         {
             if (keyName.Contains(":"))
@@ -94,7 +101,7 @@ namespace MaoRedisMianBan
                 R_Record subFolder = parentFolder.Records.Find(x => x.Name.Equals(folderName) && x.GetType() == typeof(R_Folder));
                 if (subFolder == null)
                 {
-                    subFolder = new R_Folder(folderName, new List<R_Record>());
+                    subFolder = new R_Folder(folderName, new List<R_Record>(),this);
                     parentFolder.Records.Add(subFolder);
                 }
                 return GetFolder((R_Folder)subFolder, keyName.Substring(idx + 1));

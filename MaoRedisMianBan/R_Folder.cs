@@ -5,6 +5,7 @@ namespace MaoRedisMianBan
     public class R_Folder : R_Record
     {
         public List<R_Record> Records { get; set; }
+        public R_Server Server { get; }
         public int Count
         {
             get
@@ -19,10 +20,11 @@ namespace MaoRedisMianBan
             }
         }
 
-        public R_Folder(string name, List<R_Record> records)
+        public R_Folder(string name, List<R_Record> records,R_Server server)
         {
             Name = name;
             Records = records;
+            Server = server;
         }
     }
 }

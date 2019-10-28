@@ -11,4 +11,8 @@
     <ProjectReference Include="..\MaoRedisLib\MaoRedisLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
 </Project>

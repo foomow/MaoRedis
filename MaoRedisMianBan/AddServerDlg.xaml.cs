@@ -35,7 +35,7 @@ namespace MaoRedisMianBan
             Password = TB_Psw.Text.Trim();
             try
             {
-                Dns.GetHostEntry(Addr);
+                IPHostEntry entry = Dns.GetHostEntry(Addr);
             }
             catch
             {
