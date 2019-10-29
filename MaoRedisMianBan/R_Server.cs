@@ -1,6 +1,8 @@
 ﻿using MaoRedisLib;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace MaoRedisMianBan
 {
@@ -43,35 +45,39 @@ namespace MaoRedisMianBan
             Databases.Clear();
         }
 
-        public void Connect()
+        public void Connect(Func<int, int> report)
         {
             _redis = new RedisAdaptor(_addr, _port);
             _redis.Connect(_psw);
             JObject infoJson = _redis.Info("Keyspace");
             if (infoJson["result"].ToString() == "error") return;
-            foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
+            JToken dbList = infoJson["data"]["Keyspace"];
+            int progress = 1;
+            int total = ((JContainer)dbList).Count;
+            foreach (JProperty dbInfo in dbList)
             {
                 int db_number = int.Parse(dbInfo.Name.Replace("db", ""));
                 R_Database db = new R_Database(dbInfo.Name, new List<R_Record>(), this);
                 db.Pattern = db_number.ToString();
                 db.Count = int.Parse(dbInfo.Value.ToString().Split(",")[0].Remove(0, 5));
-                if (db.Count > 100) continue;
 
                 ArrangeKeys(db_number, "*", db);
 
                 Databases.Add(db);
+                report(100 * progress / total);
+                progress++;
             }
             foreach (R_Folder folder in Databases)
                 SortFolder(folder);
         }
 
-        public void Connect(string addr, ushort port = 6379, string psw = "")
-        {
-            _addr = addr;
-            _port = port;
-            _psw = psw;
-            Connect();
-        }
+        //public void Connect(string addr, ushort port = 6379, string psw = "")
+        //{
+        //    _addr = addr;
+        //    _port = port;
+        //    _psw = psw;
+        //    Connect();
+        //}
 
         public string GetKey(R_Key key)
         {

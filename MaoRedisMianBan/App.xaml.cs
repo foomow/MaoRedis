@@ -82,10 +82,7 @@ namespace MaoRedisMianBan
                 catch (Exception e)
                 {
                     MessageBox.Show(e.Message, "Load config file failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Shutdown();
-                    return;
                 }
-
             }
             JObject cfgJson = new JObject();
             JObject server = new JObject();
@@ -108,25 +105,38 @@ namespace MaoRedisMianBan
             ServerPool.Add(defaultserver);
         }
 
-        public R_Server AddServer(string name, string addr, ushort port, string psw)
+        public R_Server AddServer()
         {
-            R_Server server;
-            if (ServerPool.Exists(x => x.Addr == addr && x.Port == port))
+            AddServerDlg dlg = new AddServerDlg();
+            dlg.Owner = MainWindow;
+            if ((bool)dlg.ShowDialog())
             {
-                MessageBox.Show("The server already exists.", "Add server exception", MessageBoxButton.OK, MessageBoxImage.Warning);
-                server = ServerPool.Find(x => x.Addr == addr && x.Port == port);
-            }
-            else
-            {
-                server = new R_Server(name, new List<R_Database>())
+                R_Server server;
+                string addr = dlg.Addr;
+                ushort port = dlg.Port;
+                string name = dlg.ServerName;
+                if (name == "")
+                    name = addr + ":" + port;
+                string psw = dlg.Password;
+
+                if (ServerPool.Exists(x => x.Addr == addr && x.Port == port))
                 {
-                    Addr = addr,
-                    Port = port,
-                    Psw = psw
-                };
-                ServerPool.Add(server);
+                    MessageBox.Show("The server already exists.", "Add server exception", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    server = ServerPool.Find(x => x.Addr == addr && x.Port == port);
+                }
+                else
+                {
+                    server = new R_Server(name, new List<R_Database>())
+                    {
+                        Addr = addr,
+                        Port = port,
+                        Psw = psw
+                    };
+                    ServerPool.Add(server);
+                }
+                return server;
             }
-            return server;
+            return null;
         }
 
         public void RefreshFolder(R_Record record)
@@ -137,6 +147,40 @@ namespace MaoRedisMianBan
         public string GetKey(R_Key key)
         {
             return key.Server.GetKey(key);
+        }
+
+        public void ServerConnect(R_Server server)
+        {
+            ConnectDlg dlg = new ConnectDlg(server);
+            if (dlg.ShowDialog() == true) { 
+            };            
+        }
+
+        public bool ServerEdit(R_Server server)
+        {
+            AddServerDlg dlg = new AddServerDlg();
+            dlg.TB_Addr.Text = server.Addr;
+            dlg.TB_Port.Text = server.Port.ToString();
+            dlg.TB_Psw.Text = server.Psw;
+            dlg.TB_ServerName.Text = server.Name;
+            dlg.BTN_Add.Content = "Edit";
+            dlg.Owner = MainWindow;
+            if ((bool)dlg.ShowDialog())
+            {
+                string addr = dlg.Addr;
+                ushort port = dlg.Port;
+                string serverName = dlg.ServerName;
+                if (serverName == "")
+                    serverName = addr + ":" + port;
+                string psw = dlg.Password;
+
+                server.Addr = addr;
+                server.Port = port;
+                server.Psw = psw;
+                server.Name = serverName;
+                return true;
+            }
+            return false;
         }
     }
 }

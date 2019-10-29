@@ -32,7 +32,7 @@ namespace MaoRedisMianBan
             theApp = (App)Application.Current;
             MyTreeViewItems.ItemsSource = theApp.ServerPool;
         }
-        
+
         public void UI_RefreshTree()
         {
             MyTreeViewItems.Items.Refresh();
@@ -85,18 +85,9 @@ namespace MaoRedisMianBan
 
         private void BTN_Add_Click(object sender, RoutedEventArgs e)
         {
-            AddServerDlg dlg = new AddServerDlg();
-            dlg.Owner = this;
-            if ((bool)dlg.ShowDialog())
+            R_Server server = theApp.AddServer();
+            if (server != null)
             {
-                string addr = dlg.Addr;
-                ushort port = dlg.Port;
-                string name = dlg.ServerName;
-                if (name == "")
-                    name = addr + ":" + port;
-                string psw = dlg.Password;
-
-                R_Server server = theApp.AddServer(name, addr, port, psw);
                 TreeViewItem item = (TreeViewItem)MyTreeViewItems.ItemContainerGenerator.ContainerFromItem(server);
                 if (item != null)
                 {
@@ -111,14 +102,7 @@ namespace MaoRedisMianBan
         {
             MenuItem item = (MenuItem)sender;
             R_Server server = (R_Server)item.DataContext;
-            if (item.Header.ToString() == "Connect")
-            {
-                server.Connect();
-            }
-            else
-            {
-                server.Disconnect();
-            }
+            theApp.ServerConnect(server);
             UI_RefreshTree();
         }
 
@@ -137,28 +121,7 @@ namespace MaoRedisMianBan
         {
             MenuItem item = (MenuItem)sender;
             R_Server server = (R_Server)item.DataContext;
-            AddServerDlg dlg = new AddServerDlg();
-            dlg.TB_Addr.Text = server.Addr;
-            dlg.TB_Port.Text = server.Port.ToString();
-            dlg.TB_Psw.Text = server.Psw;
-            dlg.TB_ServerName.Text = server.Name;
-            dlg.BTN_Add.Content = "Edit";
-            dlg.Owner = this;
-            if ((bool)dlg.ShowDialog())
-            {
-                string addr = dlg.Addr;
-                ushort port = dlg.Port;
-                string serverName = dlg.ServerName;
-                if (serverName == "")
-                    serverName = addr + ":" + port;
-                string psw = dlg.Password;
-
-                server.Addr = addr;
-                server.Port = port;
-                server.Psw = psw;
-                server.Name = serverName;
-                UI_RefreshTree();
-            }
+            if (theApp.ServerEdit(server)) UI_RefreshTree();
         }
 
         private void MI_FolderRefresh(object sender, RoutedEventArgs e)
@@ -185,7 +148,7 @@ namespace MaoRedisMianBan
         private void MI_KeyReload(object sender, RoutedEventArgs e)
         {
             R_Key key = (R_Key)((MenuItem)sender).DataContext;
-            string ret=theApp.GetKey(key);
+            string ret = theApp.GetKey(key);
             logwnd.Text = ret;
         }
 
