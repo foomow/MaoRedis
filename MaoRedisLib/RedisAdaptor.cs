@@ -45,8 +45,9 @@ namespace MaoRedisLib
                     {
                         bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
                     }
-                    catch
+                    catch(Exception e)
                     {
+                        Logger.Error(e.Message);
                         throw new SocketException();
                     }
                     totalreceived += bytes;
@@ -65,8 +66,9 @@ namespace MaoRedisLib
                     {
                         bytes = R_Socket.Receive(bytesReceived, 1, 0);
                     }
-                    catch
+                    catch(Exception e)
                     {
+                        Logger.Error(e.Message);
                         throw new SocketException();
                     }
                     ret += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
@@ -92,11 +94,12 @@ namespace MaoRedisLib
 
         private JObject Interact(string cmd)
         {
-            Logger.Info(cmd);
             R_Socket.SendTimeout = RequestTimeout;
             R_Socket.ReceiveTimeout = ResponseTimeout;
 
             string stringSent = BuildSendString(cmd);
+
+            Logger.Info(stringSent);
 
             if (stringSent == "") return ParseResponse("");
 
@@ -146,6 +149,11 @@ namespace MaoRedisLib
                 json["result"] = "error";
                 json["data"] = data.TrimStart('-');
             }
+            else if (data.StartsWith(':'))
+            {
+                json["result"] = "success";
+                json["data"] = data.TrimStart(':');
+            }
             else if (data.StartsWith('+'))
             {
                 json["result"] = "success";
@@ -157,28 +165,31 @@ namespace MaoRedisLib
                 try
                 {
                     int length = int.Parse(data.TrimStart('$'));
-                    json["data"] = ReceiveData(length);
-                    if (cmd == "info")
+                    if (length != -1)
                     {
-                        JObject infos = new JObject();
-                        string[] sections = json["data"].ToString().Split("# ");
-                        foreach (string section in sections)
+                        json["data"] = ReceiveData(length);
+                        if (cmd == "info")
                         {
-                            if (section.Length > 0)
+                            JObject infos = new JObject();
+                            string[] sections = json["data"].ToString().Split("# ");
+                            foreach (string section in sections)
                             {
-                                string[] lines = section.Split("\r\n");
-                                JObject sectJson = new JObject();
-                                foreach (string line in lines)
+                                if (section.Length > 0)
                                 {
-                                    if (line.Length > 0 && line.Contains(':'))
+                                    string[] lines = section.Split("\r\n");
+                                    JObject sectJson = new JObject();
+                                    foreach (string line in lines)
                                     {
-                                        sectJson.Add(line.Split(':')[0], line.Split(':')[1]);
+                                        if (line.Length > 0 && line.Contains(':'))
+                                        {
+                                            sectJson.Add(line.Split(':')[0], line.Split(':')[1]);
+                                        }
                                     }
+                                    infos.Add(lines[0], sectJson);
                                 }
-                                infos.Add(lines[0], sectJson);
                             }
+                            json["data"] = infos;
                         }
-                        json["data"] = infos;
                     }
                 }
                 catch

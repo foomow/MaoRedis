@@ -36,7 +36,8 @@ namespace MaoRedisLib
                 return Interact($"hgetall {key.Replace(" ", "%20")}");
             else if (typeJson["data"].ToString() == "list")
             {
-                int endIdx=int.Parse(Interact($"llen {key.Replace(" ", "%20")}")["data"].ToString());
+                JObject retJson = Interact($"llen {key.Replace(" ", "%20")}");
+                int endIdx=int.Parse(retJson["data"].ToString());
                 return Interact($"lrange {key.Replace(" ", "%20")} 0 {endIdx}");
             }
             else if(typeJson["data"].ToString() == "sort")

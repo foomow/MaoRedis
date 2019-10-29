@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace MaoRedisLib
@@ -24,11 +25,12 @@ namespace MaoRedisLib
         private static void Output(string msg, ConsoleColor color)
         {
             string DateString = DateTime.Now.ToString("HH:ss:mm:ffff");
-            Console.ResetColor();
-            Console.Write("[" + DateString + "]");
-            Console.ForegroundColor = color;
-            Console.WriteLine(msg);
-            Console.ResetColor();
+            //Console.ResetColor();
+            //Console.Write("[" + DateString + "]");
+            //Console.ForegroundColor = color;
+            //Console.WriteLine(msg);
+            //Console.ResetColor();
+            Debug.WriteLine("[" + DateString + "]"+msg);
         }
     }
 }

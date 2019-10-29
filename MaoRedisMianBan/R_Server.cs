@@ -52,25 +52,13 @@ namespace MaoRedisMianBan
             foreach (JProperty dbInfo in infoJson["data"]["Keyspace"])
             {
                 int db_number = int.Parse(dbInfo.Name.Replace("db", ""));
-                R_Database db = new R_Database(dbInfo.Name, new List<R_Record>(),this);
+                R_Database db = new R_Database(dbInfo.Name, new List<R_Record>(), this);
                 db.Pattern = db_number.ToString();
                 db.Count = int.Parse(dbInfo.Value.ToString().Split(",")[0].Remove(0, 5));
                 if (db.Count > 100) continue;
-                JObject useRet = _redis.UseDB(db_number);
-                JObject keysJson = _redis.GetKeys();
 
-                JArray keys = new JArray();
-                if (keysJson["data"].Type == JTokenType.Array)
-                {
-                    keys = (JArray)keysJson["data"];
-                }
-                foreach (JToken key in keys)
-                {
-                    string keyName = key.ToString();
-                    R_Folder folder = GetFolder(db, keyName);
-                    R_Key _key = new R_Key(key.ToString(), null, this);
-                    folder.Records.Add(_key);
-                }
+                ArrangeKeys(db_number, "*", db);
+
                 Databases.Add(db);
             }
             foreach (R_Folder folder in Databases)
@@ -84,6 +72,13 @@ namespace MaoRedisMianBan
             _psw = psw;
             Connect();
         }
+
+        public string GetKey(R_Key key)
+        {
+            _redis.UseDB(key.Database_Number);
+            return _redis.Get(key.Name).ToString();
+        }
+
         public void RefreshKeys(R_Folder folder)
         {
             string pattern = "*";
@@ -92,35 +87,41 @@ namespace MaoRedisMianBan
             {
                 int idx = folder.Pattern.IndexOf(":");
                 db_number = int.Parse(folder.Pattern.Substring(0, idx));
-                pattern = folder.Pattern.Substring(idx + 1)+"*";
+                pattern = folder.Pattern.Substring(idx + 1) + "*";
             }
             else
             {
                 db_number = int.Parse(folder.Pattern);
             }
 
+            folder.Records.Clear();
+
+            ArrangeKeys(db_number, pattern, folder);
+
+            foreach (R_Folder subfolder in Databases)
+                SortFolder(subfolder);
+        }
+
+        private void ArrangeKeys(int db_number, string pattern, R_Folder folder)
+        {
             _redis.UseDB(db_number);
             JObject keysJson = _redis.GetKeys(pattern);
-
-            folder.Records.Clear();
             JArray keys = new JArray();
             if (keysJson["data"].Type == JTokenType.Array)
             {
                 keys = (JArray)keysJson["data"];
             }
-            string prefix = pattern.Replace("*","");
             foreach (JToken key in keys)
             {
                 string keyName = key.ToString();
-                keyName = keyName.Substring(prefix.Length).TrimStart(':');
-
+                if (pattern != "*")
+                    keyName = keyName.Substring(pattern.Replace("*", "").Length).TrimStart(':');
                 R_Folder destfolder = GetFolder(folder, keyName);
-                R_Key _key = new R_Key(key.ToString(), null, this);
+                R_Key _key = new R_Key(key.ToString(), this, db_number, destfolder);
                 destfolder.Records.Add(_key);
             }
-            foreach (R_Folder subfolder in Databases)
-                SortFolder(subfolder);
         }
+
         private R_Folder GetFolder(R_Folder parentFolder, string keyName)
         {
             if (keyName.Contains(":"))
@@ -130,7 +131,7 @@ namespace MaoRedisMianBan
                 R_Record subFolder = parentFolder.Records.Find(x => x.Name.Equals(folderName) && x.GetType() == typeof(R_Folder));
                 if (subFolder == null)
                 {
-                    subFolder = new R_Folder(folderName, new List<R_Record>(),this);
+                    subFolder = new R_Folder(folderName, new List<R_Record>(), this);
                     ((R_Folder)subFolder).Pattern = parentFolder.Pattern + ":" + folderName;
                     parentFolder.Records.Add(subFolder);
                 }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MaoRedisMianBan"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" FontSize="16" Closing="Window_Closing">
+        Title="MainWindow" MinHeight="420" MinWidth="640" FontSize="16">
     <Window.Resources>
         <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
             <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}">
@@ -28,30 +28,37 @@
                     <ContextMenu>
                         <MenuItem Header="Refresh" Click="MI_FolderRefresh" />
                         <Separator />
-                        <MenuItem Header="Delete" Click="MI_KeyDelete"  />
+                        <MenuItem Header="Delete" Click="MI_FolderDelete"  />
                     </ContextMenu>
                 </StackPanel.ContextMenu>
             </StackPanel>
         </HierarchicalDataTemplate>
 
         <DataTemplate DataType="{x:Type local:R_Key}">
-            <TextBlock Text="{Binding Path=Name}"/>
+            <TextBlock Text="{Binding Path=Name}">
+                <TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="ReLoad" Click="MI_KeyReload" />
+                        <Separator />
+                        <MenuItem Header="Delete" Click="MI_KeyDelete"  />
+                    </ContextMenu>
+                </TextBlock.ContextMenu>
+            </TextBlock>
         </DataTemplate>
     </Window.Resources>
     <DockPanel>
         <Grid DockPanel.Dock="Bottom" Margin="5,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" MinWidth="150"/>
                 <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Margin="5,5">
-                <Button Name="BTN_Add" Width="80" Content="Add" HorizontalAlignment="Left" VerticalAlignment="Top" Click="BTN_Add_Click"/>
-                <TextBox Name="TB_Addr" Width="180" Text="192.168.3.90:6379" />
+            <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Margin="5,5" HorizontalAlignment="Stretch">
+                <Button Name="BTN_Add" Width="80" Content="Add" Click="BTN_Add_Click"/>
             </StackPanel>
             <Border Grid.Row="1" Grid.Column="0" Margin="5,5" BorderThickness="1" BorderBrush="Gray">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -67,8 +74,8 @@
                     </TreeView>
                 </ScrollViewer>
             </Border>
-            <GridSplitter Grid.Column="1" Grid.RowSpan="2" Width="5" HorizontalAlignment="Stretch"/>
-            <TextBox Grid.RowSpan="2" Grid.Column="2" Margin="5,5"/>
+            <GridSplitter Grid.Column="1" Grid.RowSpan="2" Width="3" HorizontalAlignment="Stretch" Margin="0,5"/>
+            <TextBox Name="logwnd" Grid.RowSpan="2" Grid.Column="2" Margin="5,5" AcceptsReturn="True" AcceptsTab="True"/>
         </Grid>
     </DockPanel>
 

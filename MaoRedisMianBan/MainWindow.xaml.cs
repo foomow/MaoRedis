@@ -24,78 +24,63 @@ namespace MaoRedisMianBan
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly List<R_Server> servers = new List<R_Server>();
+        private readonly App theApp;
+
         public MainWindow()
         {
             InitializeComponent();
-            LoadConfig();
-            MyTreeViewItems.ItemsSource = servers;
+            theApp = (App)Application.Current;
+            MyTreeViewItems.ItemsSource = theApp.ServerPool;
         }
-
-        private void LoadConfig()
-        {
-            string FileName = AppContext.BaseDirectory + "/config.json";
-
-            if (File.Exists(FileName))
-            {
-                try
-                {
-                    JObject json = JObject.Parse(File.ReadAllText(FileName));
-                    if (json.ContainsKey("servers"))
-                    {
-                        if (json["servers"].Type == JTokenType.Array)
-                        {
-                            JArray serverJArray = (JArray)json["servers"];
-                            foreach (JToken serverToken in serverJArray)
-                            {
-                                R_Server newserver = new R_Server(serverToken["name"].ToString(), new List<R_Database>())
-                                {
-                                    Addr = serverToken["addr"].ToString(),
-                                    Port = ushort.Parse(serverToken["port"].ToString()),
-                                    Psw = serverToken["psw"].ToString()
-                                };
-                                if (!servers.Exists(x => x.Addr == newserver.Addr && x.Port == newserver.Port))
-                                    servers.Add(newserver);
-                            }
-                        }
-                    }
-                    return;
-                }
-                catch
-                {
-                }
-
-            }
-            JObject cfgJson = new JObject();
-            JObject server = new JObject();
-            server.Add("name", "localhost");
-            server.Add("addr", "127.0.0.1");
-            server.Add("port", "6379");
-            server.Add("psw", "");
-            JArray serversJson = new JArray();
-            serversJson.Add(server);
-            cfgJson.Add("servers", serversJson);
-            File.WriteAllText(FileName, cfgJson.ToString());
-
-            R_Server defaultserver = new R_Server(server["name"].ToString(), new List<R_Database>())
-            {
-                Addr = server["addr"].ToString(),
-                Port = ushort.Parse(server["port"].ToString()),
-                Psw = server["psw"].ToString()
-            };
-
-            servers.Add(defaultserver);
-        }
-
-        public void RefreshTree()
+        
+        public void UI_RefreshTree()
         {
             MyTreeViewItems.Items.Refresh();
         }
 
+        private void UI_FocusItem(R_Record record)
+        {
+            string path = "db" + ((R_Folder)record).Pattern;
+            string[] segs = path.Split(':');
+            TreeViewItem item = (TreeViewItem)MyTreeViewItems.ItemContainerGenerator.ContainerFromItem(((R_Folder)record).Server);
+            item.IsExpanded = true;
+            MyTreeViewItems.UpdateLayout();
+            R_Folder folder = ((R_Folder)record).Server.Databases.Find(x => x.Name == segs[0]);
+            if (folder != null)
+            {
+                item = (TreeViewItem)item.ItemContainerGenerator.ContainerFromItem(folder);
+                if (item != null)
+                {
+                    for (int i = 1; i < segs.Length; i++)
+                    {
+                        item.IsExpanded = true;
+                        MyTreeViewItems.UpdateLayout();
+                        string seg = segs[i];
+                        folder = (R_Folder)folder.Records.Find(x => x.Name == seg);
+                        if (folder != null)
+                        {
+                            TreeViewItem nextitem = (TreeViewItem)item.ItemContainerGenerator.ContainerFromItem(folder);
+                            if (nextitem != null)
+                            {
+                                item = nextitem;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            item.IsExpanded = true;
+            item.Focus();
+            item.IsSelected = true;
+        }
+
         public void RemoveServer(R_Server server)
         {
-            servers.Remove(server);
-            RefreshTree();
+            theApp.ServerPool.Remove(server);
+            UI_RefreshTree();
         }
 
         private void BTN_Add_Click(object sender, RoutedEventArgs e)
@@ -106,31 +91,19 @@ namespace MaoRedisMianBan
             {
                 string addr = dlg.Addr;
                 ushort port = dlg.Port;
-                string serverName = dlg.ServerName;
-                if (serverName == "")
-                    serverName = addr + ":" + port;
+                string name = dlg.ServerName;
+                if (name == "")
+                    name = addr + ":" + port;
                 string psw = dlg.Password;
-                R_Server server = new R_Server(serverName, new List<R_Database>())
-                {
-                    Addr = addr,
-                    Port = port,
-                    Psw = psw
-                };
 
-                if (servers.Exists(x => x.Addr == server.Addr && x.Port == server.Port))
+                R_Server server = theApp.AddServer(name, addr, port, psw);
+                TreeViewItem item = (TreeViewItem)MyTreeViewItems.ItemContainerGenerator.ContainerFromItem(server);
+                if (item != null)
                 {
-                    MessageBox.Show("The server already exists.");
-                    R_Server exist_server = servers.Find(x => x.Addr == server.Addr && x.Port == server.Port);
-                    TreeViewItem item = (TreeViewItem)MyTreeViewItems.ItemContainerGenerator.ContainerFromItem(exist_server);
                     item.Focus();
                     item.IsSelected = true;
                 }
-                else
-                {
-                    servers.Add(server);
-                    RefreshTree();
-                }
-
+                UI_RefreshTree();
             }
         }
 
@@ -141,14 +114,12 @@ namespace MaoRedisMianBan
             if (item.Header.ToString() == "Connect")
             {
                 server.Connect();
-                RefreshTree();
-
             }
             else
             {
                 server.Disconnect();
-                RefreshTree();
             }
+            UI_RefreshTree();
         }
 
         private void MI_ServerRemove(object sender, RoutedEventArgs e)
@@ -186,79 +157,39 @@ namespace MaoRedisMianBan
                 server.Port = port;
                 server.Psw = psw;
                 server.Name = serverName;
-                RefreshTree();
+                UI_RefreshTree();
             }
-        }
-
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            string FileName = AppContext.BaseDirectory + "/config.json";
-            JObject cfgJson = new JObject();
-            JArray serversJson = new JArray();
-            foreach (R_Server server in servers)
-            {                
-                JObject serverJson = new JObject();
-                serverJson.Add("name", server.Name);
-                serverJson.Add("addr", server.Addr);
-                serverJson.Add("port", server.Port.ToString());
-                serverJson.Add("psw", server.Psw);                
-                serversJson.Add(serverJson);                
-            }
-            cfgJson.Add("servers", serversJson);
-            File.WriteAllText(FileName, cfgJson.ToString());
         }
 
         private void MI_FolderRefresh(object sender, RoutedEventArgs e)
         {
             R_Record record = (R_Record)((MenuItem)sender).DataContext;
-            RefreshKey(record);            
+            RefreshFolder(record);
         }
 
-        private void RefreshKey(R_Record record)
+        private void RefreshFolder(R_Record record)
         {
-            if (record.GetType() == typeof(R_Folder))
+            if (record.GetType() == typeof(R_Folder) || record.GetType() == typeof(R_Database))
             {
-                ((R_Folder)record).Server.RefreshKeys((R_Folder)record);
-                RefreshTree();
-                string path = "db" + ((R_Folder)record).Pattern;
-                string[] segs = path.Split(':');
-                TreeViewItem item = (TreeViewItem)MyTreeViewItems.ItemContainerGenerator.ContainerFromItem(((R_Folder)record).Server);
-                item.ExpandSubtree();
-                R_Folder folder = ((R_Folder)record).Server.Databases.Find(x=>x.Name==segs[0]);
-                if (folder != null)
-                {
-                    item = (TreeViewItem)item.ItemContainerGenerator.ContainerFromItem(folder);
-                    if (item != null)
-                    {                        
-                        for (int i = 1; i < segs.Length; i++)
-                        {
-                            item.ExpandSubtree();
-                            string seg = segs[i];
-                            folder = (R_Folder)folder.Records.Find(x => x.Name == seg);
-                            if (folder != null)
-                            {
-                                TreeViewItem nextitem = (TreeViewItem)item.ItemContainerGenerator.ContainerFromItem(folder);
-                                if (nextitem != null)
-                                {
-                                    item = nextitem;
-                                }
-                                else {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                item.Focus();
-                item.IsSelected = true;
-            }
-            if (record.GetType() == typeof(R_Key))
-            {
-                
+                theApp.RefreshFolder(record);
+                UI_RefreshTree();
+                UI_FocusItem(record);
             }
         }
 
         private void MI_KeyDelete(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void MI_KeyReload(object sender, RoutedEventArgs e)
+        {
+            R_Key key = (R_Key)((MenuItem)sender).DataContext;
+            string ret=theApp.GetKey(key);
+            logwnd.Text = ret;
+        }
+
+        private void MI_FolderDelete(object sender, RoutedEventArgs e)
         {
 
         }
