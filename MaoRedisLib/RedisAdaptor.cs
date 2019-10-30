@@ -30,13 +30,13 @@ namespace MaoRedisLib
             Logger.Info($"Redis Adaptor [{Name}] initialized");
         }
 
-        private string ReceiveData(int length = -1)
+        private string ReceiveData(int length = -1,Func<int,int> report=null)
         {
             string ret = "";
+            int totalreceived = 0;
             if (length >= 0)
             {
-                length += 2;
-                int totalreceived = 0;
+                length += 2;                
                 int bytes;
                 do
                 {
@@ -44,13 +44,14 @@ namespace MaoRedisLib
                     try
                     {
                         bytes = R_Socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                        totalreceived += bytes;
+                        report?.Invoke(totalreceived);
                     }
                     catch(Exception e)
                     {
                         Logger.Error(e.Message);
                         throw new SocketException();
-                    }
-                    totalreceived += bytes;
+                    }                    
                     ret += Encoding.UTF8.GetString(bytesReceived, 0, bytes);
                     length -= totalreceived;
                 } while (length > 0);
@@ -65,6 +66,8 @@ namespace MaoRedisLib
                     try
                     {
                         bytes = R_Socket.Receive(bytesReceived, 1, 0);
+                        totalreceived += bytes;
+                        report?.Invoke(totalreceived);
                     }
                     catch(Exception e)
                     {
@@ -78,6 +81,8 @@ namespace MaoRedisLib
                         try
                         {
                             bytes = R_Socket.Receive(bytesReceived, 1, 0);
+                            totalreceived += bytes;
+                            report?.Invoke(totalreceived);
                         }
                         catch
                         {
@@ -88,11 +93,11 @@ namespace MaoRedisLib
                     }
                 } while (true);
             }
-            ret = ret.TrimEnd('\n').TrimEnd('\r');
+            ret = ret.TrimEnd('\n').TrimEnd('\r');            
             return ret;
         }
 
-        private JObject Interact(string cmd)
+        private JObject Interact(string cmd, Func<int, int> report)
         {
             R_Socket.SendTimeout = RequestTimeout;
             R_Socket.ReceiveTimeout = ResponseTimeout;
@@ -101,7 +106,7 @@ namespace MaoRedisLib
 
             Logger.Info(stringSent);
 
-            if (stringSent == "") return ParseResponse("");
+            if (stringSent == "") return ParseResponse("",report);
 
             string command = cmd.Trim(' ').Split(' ')[0].ToLower();
 
@@ -122,7 +127,7 @@ namespace MaoRedisLib
             JObject ret;
             try
             {
-                ret = ParseResponse(command);
+                ret = ParseResponse(command, report);
             }
             catch (Exception e)
             {
@@ -134,13 +139,13 @@ namespace MaoRedisLib
             return ret;
         }
 
-        private JObject ParseResponse(string cmd = "")
+        private JObject ParseResponse(string cmd = "",Func<int, int> report=null)
         {
             JObject json = new JObject();
             json.Add("result", "unknown");
             json.Add("command", cmd);
 
-            string data = ReceiveData();
+            string data = ReceiveData(report:report);
 
             json.Add("data", data);
 
@@ -167,7 +172,7 @@ namespace MaoRedisLib
                     int length = int.Parse(data.TrimStart('$'));
                     if (length != -1)
                     {
-                        json["data"] = ReceiveData(length);
+                        json["data"] = ReceiveData(length,report);
                         if (cmd == "info")
                         {
                             JObject infos = new JObject();
@@ -211,7 +216,7 @@ namespace MaoRedisLib
                         JObject dataList = new JObject();
                         for (int i = 0; i < arraylength / 2; i++)
                         {
-                            dataList.Add(ParseResponse()["data"].ToString(), ParseResponse()["data"].ToString());
+                            dataList.Add(ParseResponse(report:report)["data"].ToString(), ParseResponse(report:report)["data"].ToString());
                         }
                         json["data"] = dataList;
                     }
@@ -222,7 +227,7 @@ namespace MaoRedisLib
                         {
                             try
                             {
-                                dataList.Add(ParseResponse()["data"]);
+                                dataList.Add(ParseResponse(report:report)["data"]);
                             }
                             catch (Exception e)
                             {
@@ -257,30 +262,6 @@ namespace MaoRedisLib
             return ret;
         }
 
-        public bool Connect(string password = "")
-        {
-            IPHostEntry entry = Dns.GetHostEntry(mIP);
-            foreach (IPAddress address in entry.AddressList)
-            {
-                IPEndPoint ipe = new IPEndPoint(address, mPort);
-                R_Socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                R_Socket.Connect(ipe);
-
-                if (R_Socket.Connected)
-                {
-                    Logger.Info($"{address.ToString()}:{mPort} connected");
-                    if (password != "")
-                    {
-                        Logger.Info("auth result:" + Interact("auth " + password));
-                    }
-                    break;
-                }
-                else
-                {
-                    continue;
-                }
-            }
-            return true;
-        }
+        
     }
 }

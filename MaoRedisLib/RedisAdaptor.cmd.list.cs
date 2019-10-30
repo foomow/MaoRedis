@@ -8,59 +8,77 @@ namespace MaoRedisLib
 {
     public partial class RedisAdaptor
     {
-        public JObject RPush(string key, string[] elements)
+        public JObject RPush(string key, string[] elements, Func<int, int> report = null)
         {
             string cmd = $"rpush {key.Replace(" ", "%20")}";
             foreach (string element in elements)
             {
                 cmd += $" {element.Replace(" ", "%20")}";
             }
-            return Interact(cmd);
+            JObject ret = Interact(cmd,report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LPush(string key, string[] elements)
+        public JObject LPush(string key, string[] elements, Func<int, int> report = null)
         {
             string cmd = $"lpush {key.Replace(" ", "%20")}";
             foreach (string element in elements)
             {
                 cmd += $" {element.Replace(" ", "%20")}";
             }
-            return Interact(cmd);
+            JObject ret = Interact(cmd,report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject RPop(string key)
+        public JObject RPop(string key, Func<int, int> report = null)
         {
-            return Interact($"rpop {key.Replace(" ", "%20")}");
+            JObject ret = Interact($"rpop {key.Replace(" ", "%20")}",report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LPop(string key)
+        public JObject LPop(string key, Func<int, int> report = null)
         {
-            return Interact($"lpop {key.Replace(" ", "%20")}");
+            JObject ret = Interact($"lpop {key.Replace(" ", "%20")}",report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LRange(string key, int start, int stop)
+        public JObject LRange(string key, int start, int stop, Func<int, int> report = null)
         {
-            return Interact($"lrange {key.Replace(" ", "%20")} {start} {stop}");
+            JObject ret = Interact($"lrange {key.Replace(" ", "%20")} {start} {stop}",report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LLen(string key)
+        public JObject LLen(string key, Func<int, int> report = null)
         {
-            return Interact($"llen {key.Replace(" ", "%20")}");
+            JObject ret = Interact($"llen {key.Replace(" ", "%20")}",report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LIndex(string key, int index)
+        public JObject LIndex(string key, int index, Func<int, int> report = null)
         {
-            return Interact($"lindex {key.Replace(" ", "%20")} {index}");
+            JObject ret = Interact($"lindex {key.Replace(" ", "%20")} {index}",report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LSet(string key, int index, string element)
+        public JObject LSet(string key, int index, string element, Func<int, int> report = null)
         {
-            return Interact($"lset {key.Replace(" ", "%20")} {index} {element}");
+            JObject ret = Interact($"lset {key.Replace(" ", "%20")} {index} {element}",report);
+            report?.Invoke(-1);
+            return ret;
         }
 
-        public JObject LRem(string key, int count, string element)
+        public JObject LRem(string key, int count, string element, Func<int, int> report = null)
         {
-            return Interact($"lrem {key.Replace(" ", "%20")} {count} {element}");
+            JObject ret = Interact($"lrem {key.Replace(" ", "%20")} {count} {element}",report);
+            report?.Invoke(-1);
+            return ret;
         }
     }
 }

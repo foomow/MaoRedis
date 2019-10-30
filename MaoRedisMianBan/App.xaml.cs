@@ -141,7 +141,9 @@ namespace MaoRedisMianBan
 
         public void RefreshFolder(R_Record record)
         {
-            ((R_Folder)record).Server.RefreshKeys((R_Folder)record);
+            ReloadDlg dlg = new ReloadDlg(record);
+            dlg.Owner = MainWindow;
+            dlg.ShowDialog();
         }
 
         public string GetKey(R_Key key)
@@ -152,8 +154,8 @@ namespace MaoRedisMianBan
         public void ServerConnect(R_Server server)
         {
             ConnectDlg dlg = new ConnectDlg(server);
-            if (dlg.ShowDialog() == true) { 
-            };            
+            dlg.Owner = MainWindow;
+            dlg.ShowDialog();
         }
 
         public bool ServerEdit(R_Server server)

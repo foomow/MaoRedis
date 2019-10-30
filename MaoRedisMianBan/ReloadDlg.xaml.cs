@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -16,22 +15,20 @@ using System.Windows.Shapes;
 namespace MaoRedisMianBan
 {
     /// <summary>
-    /// Interaction logic for ConnectDlg.xaml
+    /// Interaction logic for ReloadDlg.xaml
     /// </summary>
-    public partial class ConnectDlg : Window
+    public partial class ReloadDlg : Window
     {
-        public R_Server Server { get; set; }
+        public R_Record Record { get; set; }
 
         private readonly BackgroundWorker worker;
 
         private int totalbyte = 0;
 
-        public ConnectDlg(R_Server server)
+        public ReloadDlg(R_Record record)
         {
-            Server = server;
-
+            Record = record;
             InitializeComponent();
-
             worker = new BackgroundWorker
             {
                 WorkerSupportsCancellation = true,
@@ -47,6 +44,7 @@ namespace MaoRedisMianBan
         {
             if (e.ProgressPercentage == -1)
             {
+                worker.CancelAsync();
                 DialogResult = true;
                 Close();
             }
@@ -60,20 +58,16 @@ namespace MaoRedisMianBan
 
         private void worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            if (Server.MIHeader == "Connect")
+            ((R_Folder)Record).Server.RefreshKeys((R_Folder)Record, (i) =>
             {
-                Server.Connect((i)=> {
-                    (sender as BackgroundWorker).ReportProgress(i);
-                    return 1;
-                });
-            }
-            else
-            {
-                Server.Disconnect();
-                (sender as BackgroundWorker).ReportProgress(-1);
-            }
+                (sender as BackgroundWorker).ReportProgress(i);
+                return 1;
+            });
         }
-
-        
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (!worker.CancellationPending) e.Cancel = true;
+            base.OnClosing(e);
+        }
     }
 }

@@ -12,16 +12,19 @@ namespace MaoRedisMianBan
             get
             {
                 int ret = 0;
-                foreach (R_Record record in Records)
+                lock (Records)
                 {
-                    if (record.GetType() == typeof(R_Key)) ret++;
-                    if (record.GetType() == typeof(R_Folder)) ret += ((R_Folder)record).Count;
+                    foreach (R_Record record in Records)
+                    {
+                        if (record.GetType() == typeof(R_Key)) ret++;
+                        if (record.GetType() == typeof(R_Folder)) ret += ((R_Folder)record).Count;
+                    }
                 }
                 return ret;
             }
         }
 
-        public R_Folder(string name, List<R_Record> records,R_Server server)
+        public R_Folder(string name, List<R_Record> records, R_Server server)
         {
             Name = name;
             Records = records;

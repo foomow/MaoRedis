@@ -49,11 +49,9 @@ namespace MaoRedisMianBan
         {
             _redis = new RedisAdaptor(_addr, _port);
             _redis.Connect(_psw);
-            JObject infoJson = _redis.Info("Keyspace");
+            JObject infoJson = _redis.Info("Keyspace",report);
             if (infoJson["result"].ToString() == "error") return;
             JToken dbList = infoJson["data"]["Keyspace"];
-            int progress = 1;
-            int total = ((JContainer)dbList).Count;
             foreach (JProperty dbInfo in dbList)
             {
                 int db_number = int.Parse(dbInfo.Name.Replace("db", ""));
@@ -61,23 +59,11 @@ namespace MaoRedisMianBan
                 db.Pattern = db_number.ToString();
                 db.Count = int.Parse(dbInfo.Value.ToString().Split(",")[0].Remove(0, 5));
 
-                ArrangeKeys(db_number, "*", db);
-
                 Databases.Add(db);
-                report(100 * progress / total);
-                progress++;
             }
             foreach (R_Folder folder in Databases)
                 SortFolder(folder);
         }
-
-        //public void Connect(string addr, ushort port = 6379, string psw = "")
-        //{
-        //    _addr = addr;
-        //    _port = port;
-        //    _psw = psw;
-        //    Connect();
-        //}
 
         public string GetKey(R_Key key)
         {
@@ -85,7 +71,7 @@ namespace MaoRedisMianBan
             return _redis.Get(key.Name).ToString();
         }
 
-        public void RefreshKeys(R_Folder folder)
+        public void RefreshKeys(R_Folder folder, Func<int, int> report)
         {
             string pattern = "*";
             int db_number;
@@ -102,16 +88,18 @@ namespace MaoRedisMianBan
 
             folder.Records.Clear();
 
-            ArrangeKeys(db_number, pattern, folder);
+            ArrangeKeys(db_number, pattern, folder,report);
 
             foreach (R_Folder subfolder in Databases)
                 SortFolder(subfolder);
+
+            report?.Invoke(-1);
         }
 
-        private void ArrangeKeys(int db_number, string pattern, R_Folder folder)
+        private void ArrangeKeys(int db_number, string pattern, R_Folder folder,Func<int, int> report)
         {
             _redis.UseDB(db_number);
-            JObject keysJson = _redis.GetKeys(pattern);
+            JObject keysJson = _redis.GetKeys(pattern,report);
             JArray keys = new JArray();
             if (keysJson["data"].Type == JTokenType.Array)
             {

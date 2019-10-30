@@ -77,12 +77,6 @@ namespace MaoRedisMianBan
             item.IsSelected = true;
         }
 
-        public void RemoveServer(R_Server server)
-        {
-            theApp.ServerPool.Remove(server);
-            UI_RefreshTree();
-        }
-
         private void BTN_Add_Click(object sender, RoutedEventArgs e)
         {
             R_Server server = theApp.AddServer();
@@ -113,7 +107,8 @@ namespace MaoRedisMianBan
             {
                 MenuItem item = (MenuItem)sender;
                 R_Server server = (R_Server)item.DataContext;
-                RemoveServer(server);
+                theApp.ServerPool.Remove(server);
+                UI_RefreshTree();
             }
         }
 
@@ -127,11 +122,6 @@ namespace MaoRedisMianBan
         private void MI_FolderRefresh(object sender, RoutedEventArgs e)
         {
             R_Record record = (R_Record)((MenuItem)sender).DataContext;
-            RefreshFolder(record);
-        }
-
-        private void RefreshFolder(R_Record record)
-        {
             if (record.GetType() == typeof(R_Folder) || record.GetType() == typeof(R_Database))
             {
                 theApp.RefreshFolder(record);
