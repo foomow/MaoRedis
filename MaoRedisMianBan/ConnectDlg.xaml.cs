@@ -22,6 +22,7 @@ namespace MaoRedisMianBan
     {
         public R_Server Server { get; set; }
 
+        public string Result { get; set; }
         private readonly BackgroundWorker worker;
 
         private int totalbyte = 0;
@@ -47,7 +48,23 @@ namespace MaoRedisMianBan
         {
             if (e.ProgressPercentage == -1)
             {
+                worker.CancelAsync();
+                Result = "success";
                 DialogResult = true;
+                Close();
+            }
+            else if (e.ProgressPercentage == -2)
+            {
+                worker.CancelAsync();
+                Result = "fail";
+                DialogResult = false;
+                Close();
+            }
+            else if (e.ProgressPercentage == -3)
+            {
+                worker.CancelAsync();
+                Result = "noauth";
+                DialogResult = false;
                 Close();
             }
             else
@@ -62,10 +79,11 @@ namespace MaoRedisMianBan
         {
             if (Server.MIHeader == "Connect")
             {
-                Server.Connect((i)=> {
-                    (sender as BackgroundWorker).ReportProgress(i);
-                    return 1;
-                });
+                Server.Connect((i) =>
+                 {
+                     (sender as BackgroundWorker).ReportProgress(i);
+                     return 1;
+                 });
             }
             else
             {
@@ -74,6 +92,10 @@ namespace MaoRedisMianBan
             }
         }
 
-        
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (!worker.CancellationPending) e.Cancel = true;
+            base.OnClosing(e);
+        }
     }
 }

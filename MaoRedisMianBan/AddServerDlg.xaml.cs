@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Windows;
@@ -30,14 +31,11 @@ namespace MaoRedisMianBan
         private void BTN_Add_Click(object sender, RoutedEventArgs e)
         {
             Addr = TB_Addr.Text;
-            
+
             ServerName = TB_ServerName.Text.Trim();
             Password = TB_Psw.Text.Trim();
-            try
-            {
-                IPHostEntry entry = Dns.GetHostEntry(Addr);
-            }
-            catch
+
+            if (!IPAddress.TryParse(Addr, out IPAddress a))
             {
                 MessageBox.Show("Invalid IP Address");
                 return;
@@ -66,9 +64,9 @@ namespace MaoRedisMianBan
         {
             string allowString = "1234567890.";
             int length = e.Text.Length;
-            for (int i=0;i<length;i++)
+            for (int i = 0; i < length; i++)
             {
-                string c = e.Text.Substring(i,1);
+                string c = e.Text.Substring(i, 1);
                 if (allowString.IndexOf(c) == -1)
                 {
                     e.Handled = true;

@@ -45,12 +45,19 @@ namespace MaoRedisMianBan
             Databases.Clear();
         }
 
-        public void Connect(Func<int, int> report)
+        public bool Connect(Func<int, int> report)
         {
             _redis = new RedisAdaptor(_addr, _port);
-            _redis.Connect(_psw);
-            JObject infoJson = _redis.Info("Keyspace",report);
-            if (infoJson["result"].ToString() == "error") return;
+            if (!_redis.Connect(_psw)) {
+                report?.Invoke(-2);
+                return false;
+            }
+            JObject infoJson = _redis.Info("Keyspace");
+            if (infoJson["result"].ToString() == "error")
+            {
+                report?.Invoke(-3);
+                return false;
+            }
             JToken dbList = infoJson["data"]["Keyspace"];
             foreach (JProperty dbInfo in dbList)
             {
@@ -63,6 +70,8 @@ namespace MaoRedisMianBan
             }
             foreach (R_Folder folder in Databases)
                 SortFolder(folder);
+            report?.Invoke(-1);
+            return true;
         }
 
         public string GetKey(R_Key key)

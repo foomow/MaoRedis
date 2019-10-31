@@ -155,7 +155,16 @@ namespace MaoRedisMianBan
         {
             ConnectDlg dlg = new ConnectDlg(server);
             dlg.Owner = MainWindow;
-            dlg.ShowDialog();
+            if (dlg.ShowDialog() == false) {
+                if (dlg.Result == "fail")
+                {
+                    MessageBox.Show("Failed to connect to server.","error",MessageBoxButton.OK,MessageBoxImage.Error);
+                }
+                if (dlg.Result == "noauth")
+                {
+                    MessageBox.Show("Failed to authorize", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            };
         }
 
         public bool ServerEdit(R_Server server)

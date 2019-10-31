@@ -75,7 +75,7 @@
                 </ScrollViewer>
             </Border>
             <GridSplitter Grid.Column="1" Grid.RowSpan="2" Width="3" HorizontalAlignment="Stretch" Margin="0,5"/>
-            <TextBox Name="logwnd" Grid.RowSpan="2" Grid.Column="2" Margin="5,5" AcceptsReturn="True" AcceptsTab="True"/>
+            <TextBox Name="logwnd" Grid.RowSpan="2" Grid.Column="2" Margin="5,5" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
         </Grid>
     </DockPanel>
 
