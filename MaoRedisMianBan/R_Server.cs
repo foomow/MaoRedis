@@ -80,6 +80,19 @@ namespace MaoRedisMianBan
             return _redis.Get(key.Name).ToString();
         }
 
+        public string DeleteKey(R_Key key)
+        {
+            R_Folder folder = key.Folder;
+            _redis.UseDB(key.Database_Number);            
+            return _redis.Del(new string[] { key.Name }).ToString();
+        }
+
+        public string DeleteKeys(int db,List<string> keynames)
+        {
+            _redis.UseDB(db);
+            return _redis.Del(keynames).ToString();
+        }
+
         public void RefreshKeys(R_Folder folder, Func<int, int> report)
         {
             string pattern = "*";

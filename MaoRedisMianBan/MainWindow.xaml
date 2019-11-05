@@ -8,7 +8,7 @@
         Title="MainWindow" MinHeight="420" MinWidth="640" FontSize="16">
     <Window.Resources>
         <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
-            <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}">
+            <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown">
                 <TextBlock.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="{Binding Path=MIHeader}" Click="MI_ServerConnect" />
@@ -22,7 +22,7 @@
 
         <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Path=Name}"/>
+                <TextBlock Text="{Binding Path=Name}" MouseDown="TextBlock_MouseDown"/>
                 <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
                 <StackPanel.ContextMenu>
                     <ContextMenu>

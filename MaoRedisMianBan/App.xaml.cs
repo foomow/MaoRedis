@@ -151,14 +151,88 @@ namespace MaoRedisMianBan
             return key.Server.GetKey(key);
         }
 
+        public string DeleteKey(R_Key key)
+        {
+            string ret = key.Server.DeleteKey(key);
+            R_Folder folder = key.Folder;
+            try
+            {
+                JObject retJson = JObject.Parse(ret);
+                if (retJson["result"].ToString() == "success")
+                {
+                    lock (folder.Records)
+                    {
+                        folder.Records.Remove(key);
+                    }
+                    RefreshFolder(folder);
+                }
+            }
+            catch (Exception ex)
+            {
+                ret = ex.Message + "\r\n" + ex.StackTrace;
+            }
+            return ret;
+        }
+
+        public string DeleteFolder(R_Folder folder)
+        {
+            List<string> keys = GetAllKeys(folder);
+            int db_number;
+            if (folder.Pattern.Contains(":"))
+            {
+                int idx = folder.Pattern.IndexOf(":");
+                db_number = int.Parse(folder.Pattern.Substring(0, idx));
+            }
+            else
+            {
+                db_number = int.Parse(folder.Pattern);
+            }
+            string ret = folder.Server.DeleteKeys(db_number, keys);
+            try
+            {
+                JObject retJson = JObject.Parse(ret);
+                if (retJson["result"].ToString() == "success")
+                {
+                    lock (folder.Records)
+                    {
+                        folder.Records.Clear();
+                    }
+                    RefreshFolder(folder);
+                }
+            }
+            catch (Exception ex)
+            {
+                ret = ex.Message + "\r\n" + ex.StackTrace;
+            }
+            return ret;
+        }
+
+        private List<string> GetAllKeys(R_Folder folder)
+        {
+            List<string> ret = new List<string>();
+            foreach (R_Record record in folder.Records)
+            {
+                if (record.GetType() == typeof(R_Key))
+                {
+                    ret.Add(record.Name);
+                }
+                else
+                {
+                    ret.AddRange(GetAllKeys((R_Folder)record));
+                }
+            }
+            return ret;
+        }
+
         public void ServerConnect(R_Server server)
         {
             ConnectDlg dlg = new ConnectDlg(server);
             dlg.Owner = MainWindow;
-            if (dlg.ShowDialog() == false) {
+            if (dlg.ShowDialog() == false)
+            {
                 if (dlg.Result == "fail")
                 {
-                    MessageBox.Show("Failed to connect to server.","error",MessageBoxButton.OK,MessageBoxImage.Error);
+                    MessageBox.Show("Failed to connect to server.", "error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 if (dlg.Result == "noauth")
                 {

@@ -132,7 +132,28 @@ namespace MaoRedisMianBan
 
         private void MI_KeyDelete(object sender, RoutedEventArgs e)
         {
+            MessageBoxResult result = MessageBox.Show("Do you want to remove this key?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                R_Key key = (R_Key)((MenuItem)sender).DataContext;
+                R_Folder folder = key.Folder;
+                string ret = theApp.DeleteKey(key);
+                try
+                {
+                    JObject retJson = JObject.Parse(ret);
+                    if (retJson["result"].ToString() == "success")
+                    {
+                        UI_RefreshTree();
+                        UI_FocusItem(folder);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ret = ex.Message + "\r\n" + ex.StackTrace;
+                }
 
+                logwnd.Text = ret;
+            }
         }
 
         private void MI_KeyReload(object sender, RoutedEventArgs e)
@@ -144,7 +165,47 @@ namespace MaoRedisMianBan
 
         private void MI_FolderDelete(object sender, RoutedEventArgs e)
         {
+            MessageBoxResult result = MessageBox.Show("Do you want to remove all keys in this Namespace?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                R_Folder folder = (R_Folder)((MenuItem)sender).DataContext;
+                
+                string ret = theApp.DeleteFolder(folder);
+                try
+                {
+                    JObject retJson = JObject.Parse(ret);
+                    if (retJson["result"].ToString() == "success")
+                    {                        
+                        UI_RefreshTree();
+                        UI_FocusItem(folder);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ret = ex.Message + "\r\n" + ex.StackTrace;
+                }
 
+                logwnd.Text = ret;
+            }
+        }
+
+        private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount > 1)
+            {
+                R_Record record = (R_Record)((MenuItem)sender).DataContext;
+                if (record.GetType() == typeof(R_Folder) || record.GetType() == typeof(R_Database))
+                {
+                    theApp.RefreshFolder(record);
+                    UI_RefreshTree();
+                    UI_FocusItem(record);
+                }
+            }
+        }
+
+        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            //todo add db-click to refresh folder
         }
     }
 }
