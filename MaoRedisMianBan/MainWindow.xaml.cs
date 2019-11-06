@@ -169,13 +169,13 @@ namespace MaoRedisMianBan
             if (result == MessageBoxResult.Yes)
             {
                 R_Folder folder = (R_Folder)((MenuItem)sender).DataContext;
-                
+
                 string ret = theApp.DeleteFolder(folder);
                 try
                 {
                     JObject retJson = JObject.Parse(ret);
                     if (retJson["result"].ToString() == "success")
-                    {                        
+                    {
                         UI_RefreshTree();
                         UI_FocusItem(folder);
                     }
@@ -189,11 +189,22 @@ namespace MaoRedisMianBan
             }
         }
 
-        private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Server_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ClickCount > 1)
             {
-                R_Record record = (R_Record)((MenuItem)sender).DataContext;
+                TextBlock item = (TextBlock)sender;
+                R_Server server = (R_Server)item.DataContext;
+                theApp.ServerConnect(server);
+                UI_RefreshTree();
+            }
+        }
+
+        private void Folder_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount > 1)
+            {
+                R_Record record = (R_Record)((StackPanel)sender).DataContext;
                 if (record.GetType() == typeof(R_Folder) || record.GetType() == typeof(R_Database))
                 {
                     theApp.RefreshFolder(record);
@@ -203,9 +214,19 @@ namespace MaoRedisMianBan
             }
         }
 
-        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        private void Key_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            //todo add db-click to refresh folder
+            if (e.ClickCount > 1)
+            {
+                R_Key key = (R_Key)((TextBlock)sender).DataContext;
+                string ret = theApp.GetKey(key);
+                logwnd.Text = ret;
+            }
         }
+
+        //private void MI_ServerAddKey(object sender, RoutedEventArgs e)
+        //{
+        //    R_Server server = (R_Server)sender;
+        //}
     }
 }

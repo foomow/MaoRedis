@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MaoRedisMianBan"
         mc:Ignorable="d"
-        Title="MainWindow" MinHeight="420" MinWidth="640" FontSize="16">
+        Title="MaoRedisMianBan" MinHeight="420" MinWidth="640" FontSize="16">
     <Window.Resources>
         <HierarchicalDataTemplate DataType="{x:Type local:R_Server}" ItemsSource = "{Binding Path=Databases}">
-            <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown">
+            <TextBlock Text="{Binding Path=Name}" Foreground="{Binding Path=FontColor}" MouseLeftButtonDown="Server_MouseLeftDown">
                 <TextBlock.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="{Binding Path=MIHeader}" Click="MI_ServerConnect" />
@@ -21,8 +21,8 @@
         </HierarchicalDataTemplate>
 
         <HierarchicalDataTemplate DataType="{x:Type local:R_Folder}" ItemsSource = "{Binding Path=Records}">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Path=Name}" MouseDown="TextBlock_MouseDown"/>
+            <StackPanel Orientation="Horizontal" MouseLeftButtonDown="Folder_MouseLeftDown">
+                <TextBlock Text="{Binding Path=Name}"/>
                 <TextBlock Text="{Binding Path=Count,StringFormat=' (keys=0)'}"/>
                 <StackPanel.ContextMenu>
                     <ContextMenu>
@@ -35,7 +35,7 @@
         </HierarchicalDataTemplate>
 
         <DataTemplate DataType="{x:Type local:R_Key}">
-            <TextBlock Text="{Binding Path=Name}">
+            <TextBlock Text="{Binding Path=Name}" MouseLeftButtonDown="Key_MouseLeftDown">
                 <TextBlock.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="ReLoad" Click="MI_KeyReload" />
@@ -75,7 +75,27 @@
                 </ScrollViewer>
             </Border>
             <GridSplitter Grid.Column="1" Grid.RowSpan="2" Width="3" HorizontalAlignment="Stretch" Margin="0,5"/>
-            <TextBox Name="logwnd" Grid.RowSpan="2" Grid.Column="2" Margin="5,5" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+            <Grid Grid.RowSpan="2" Grid.Column="2" MinWidth="140">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" MaxHeight="500" MinHeight="200"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBox Name="logwnd" Grid.Row="0" Margin="5,5" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+                <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch" Margin="5,0" />
+                <StackPanel Grid.Row="2" Margin="5,5" Orientation="Vertical" VerticalAlignment="Top">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="50">
+                        <Button Content="Add" Margin="5,5" Padding="12,0" Height="30" VerticalContentAlignment="Center" />
+                        <Button Content="Edit" Margin="5,5" Padding="12,0" Height="30" VerticalContentAlignment="Center" />
+                        <Button Content="Remove" Margin="5,5" Padding="12,0" Height="30" VerticalContentAlignment="Center" />
+                    </StackPanel>
+                    <ListView Height="100" BorderBrush="Black" BorderThickness="1" >
+                        <ListViewItem>a</ListViewItem>
+                        <ListViewItem>b</ListViewItem>
+                        <ListViewItem>c</ListViewItem>
+                    </ListView>
+                </StackPanel>
+            </Grid>
         </Grid>
     </DockPanel>
 
